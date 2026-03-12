@@ -1041,7 +1041,7 @@ select option{background:var(--card)}
         const blob = new Blob([SW_SCRIPT], {type:'application/javascript'});
         const url = URL.createObjectURL(blob);
         navigator.serviceWorker.register(url).then(reg=>{
-          console.log('[COI-SW] Registered:', reg.scope);
+          if(window.DEV_MODE) console.log('[COI-SW] Registered:', reg.scope);
           if(reg.active) return;
           // Reload once to activate COOP/COEP headers
           if(!sessionStorage.getItem('coi_reload')){
@@ -1058,6 +1058,8 @@ select option{background:var(--card)}
   <!-- (_toCents/_fromCents/_mulCents) instead of redundant float-based operations.         -->
   <!-- This eliminates the phantom-engine problem: declared precision that was never used.   -->
   <script>
+    // §v1.1.92: DEV_MODE flag — set to false for production (suppresses all console.log)
+    window.DEV_MODE = false;
     // DECIMAL_PRECISION — unified bridge to the integer-cents engine.
     // All methods below delegate to _toCents/_fromCents/_mulCents which are
     // defined in the main JS block. At declaration time those globals are not
@@ -1076,7 +1078,7 @@ select option{background:var(--card)}
       // Weighted average for profit allocation
       proportion:(part,total,value)=> total===0?0:Math.round(parseFloat(part||0)/parseFloat(total||1)*parseFloat(value||0)*100)/100,
     };
-    console.log('[DECIMAL] §FIX-DECIMAL v10.6: precision engine linked to integer-cents architecture');
+    if(window.DEV_MODE) console.log('[DECIMAL] §FIX-DECIMAL v10.6: precision engine linked to integer-cents architecture');
   </script>
 
   <!-- §7.2 v10.5: SQLite WASM — async secondary storage for advanced queries -->
@@ -1107,7 +1109,7 @@ select option{background:var(--card)}
         }
         await createSQLiteSchema();
         window.SQLITE_READY = true;
-        console.log('[SQLite] Ready — mode:', window.SQLITE_STATUS);
+        if(window.DEV_MODE) console.log('[SQLite] Ready — mode:', window.SQLITE_STATUS);
       }catch(e){
         window.SQLITE_STATUS = 'error:'+e.message;
         console.warn('[SQLite] Init failed (non-critical):', e.message);
@@ -1165,7 +1167,7 @@ select option{background:var(--card)}
                 });
               }catch(_){}
             });
-            console.log('[SQLite] Migration complete —', count, 'records synced');
+            if(window.DEV_MODE) console.log('[SQLite] Migration complete —', count, 'records synced');
             resolve(count);
           }catch(e){ console.warn('[SQLite] Migration error:', e); resolve(0); }
         });
@@ -1260,7 +1262,7 @@ function loginScreenRestore(){
 <!-- ═══ SETUP SCREEN (First Launch) ═══ -->
 <div class="screen" id="setupScreen">
   <div class="glass">
-    <div class="logo-c"><span class="em">🏪</span><h1>SmartStorePOS Gold</h1><p class="sub">نظام إدارة المتاجر الذكي</p><span class="vbadge">v10.6 — §FIX: invCostValue cents · Expenses cents · DECIMAL_PRECISION · Auto-render restore · 3 new tests</span></div>
+    <div class="logo-c"><span class="em">🏪</span><h1>SmartStorePOS Gold</h1><p class="sub">نظام إدارة المتاجر الذكي</p><span class="vbadge">v1.1.95 — §FIX: PDF Arabic · TOAST.err · Admin stats</span></div>
     <div class="sdots"><div class="sdot act" id="d1"></div><div class="sdot" id="d2"></div></div>
 
     <!-- Step 1: Owner Google Login (sp0 removed — info merged into login card) -->
@@ -1740,7 +1742,7 @@ function loginScreenRestore(){
 <div class="page" id="page-reports">
   <div class="ph"><div><h1>التقارير 📈</h1><p>تحليل معمق — مُعاد حسابه من الأحداث</p></div>
     <div style="display:flex;gap:7px">
-      <button class="btn bgh bsm" onclick="exportCSV(DB.invoices,'الفواتير')"><i class="fa-brands fa-file-excel" style="color:#1D6F42"></i>Excel</button>
+      <button class="btn bgh bsm" onclick="exportCSV(DB.all('INVOICES'),'الفواتير')"><i class="fa-brands fa-file-excel" style="color:#1D6F42"></i>Excel</button>
       <button class="btn bgh bsm" onclick="exportRptPDF()"><i class="fa-solid fa-file-pdf" style="color:#e53e3e"></i>PDF</button>
     </div>
   </div>
@@ -3510,7 +3512,7 @@ function loginScreenRestore(){
 </div></div>
 
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 
 // ════════════════════════════════════════════
 //  SmartStorePOS Gold v4.0
@@ -4014,6 +4016,16 @@ const BACKUP = (function(){
   return {
     exportJSON(pin){
       if(!_verifyPin(pin)){ TOAST.err('PIN غير صحيح'); return false; }
+      // §v1.1.92: localStorage size warning — alert if usage exceeds ~80% of ~5MB limit
+      try {
+        const usedBytes = Object.keys(localStorage)
+          .filter(k => k.startsWith('spos_'))
+          .reduce((a, k) => a + (localStorage.getItem(k) || '').length * 2, 0); // *2 for UTF-16
+        const limitBytes = 5 * 1024 * 1024; // 5MB estimated browser limit
+        if (usedBytes > limitBytes * 0.8) {
+          TOAST.warn('⚠️ التخزين المحلي وصل إلى ' + Math.round(usedBytes / 1024) + 'KB — يُنصح بتصدير نسخة احتياطية وحذف البيانات القديمة');
+        }
+      } catch(_) {}
       const data = {
         app_version: APP_VERSION,
         version: '4.0',           // legacy field — kept for backward compat
@@ -4273,7 +4285,7 @@ function nowLocalFull(){
 // Schema version: bumped when DB structure changes.
 // ════════════════════════════════════════════════════════════════════
 const SCHEMA_VERSION = 3; // v3: integer cents storage, timestamp seq, two-phase migration
-const APP_VERSION    = '1.1.57'; // Updated through v1.1.56 — Firebase Auth, Drive backup/restore
+const APP_VERSION    = '1.1.95'; // §v1.1.95: Fix TOAST.error→err; Sup/CashFlow PDF → Arabic _buildPrintDoc; Admin stats logic
 // ═══════════════════════════════════════════════════════════════════════
 // §ROOT-CAUSE-FIX v10.8 — NOTES/RETURNS UI NOT UPDATING (FINAL FIX)
 // ───────────────────────────────────────────────────────────────────────
@@ -6846,7 +6858,7 @@ const DRIVE_SYNC = (function(){
         const uploaded = await uploadRes.json();
 
         TOAST.ok('✓ تم رفع النسخة الاحتياطية إلى Drive: ' + filename);
-        console.log('[Drive Backup] Uploaded:', uploaded.name, '| ID:', uploaded.id);
+        if(window.DEV_MODE) console.log('[Drive Backup] Uploaded:', uploaded.name, '| ID:', uploaded.id);
 
         // Log to BACKUPS table
         try {
@@ -7324,7 +7336,7 @@ const APP = {
     const cats = [...new Set(DB.all('PRODUCTS').map(p=>p.cat).filter(Boolean))];
     ['posCat','prodCatF','invtCatF'].forEach(id => {
       const el = document.getElementById(id);
-      if(el){ el.innerHTML = '<option>جميع الفئات</option>' + cats.map(c=>`<option>${c}</option>`).join(''); }
+      if(el){ el.innerHTML = '<option>جميع الفئات</option>' + cats.map(c=>`<option>${escapeHtml(c)}</option>`).join(''); }
     });
   },
   goTo(page){
@@ -8150,7 +8162,7 @@ const POS = {
     const cat = UI.val('posCat');
     const cats = [...new Set(DB.all('PRODUCTS').map(p=>p.cat).filter(Boolean))];
     const posCat = document.getElementById('posCat');
-    if(posCat) posCat.innerHTML = '<option>جميع الفئات</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+    if(posCat) posCat.innerHTML = '<option>جميع الفئات</option>'+cats.map(c=>`<option>${escapeHtml(c)}</option>`).join('');
     const grid = document.getElementById('posGrid');
     const s = getCurr();
     // Products appear ONLY after user types (performance + UX)
@@ -8196,7 +8208,8 @@ const POS = {
     const s=getCurr();
     // §POS-QTY: id-based addressing (stable across re-renders); onchange fires on blur/Enter
     // only (not oninput) so user can clear the field and type a new number without mid-type resets.
-    container.innerHTML=CART.map((it,i)=>`<div class="bitem"><div><div class="biname">${escapeHtml(it.name)}</div><div class="biup">${it.price} ${s}/${it.unit}</div></div><div class="qrow"><button class="qb" onclick="POS.decQty('${it.id}')">−</button><input class="qin" type="number" value="${it.qty}" min="1" onchange="POS.updateQty('${it.id}',this.value)" style="width:54px;text-align:center"><button class="qb" onclick="POS.incQty('${it.id}')">+</button></div><div style="font-size:12px;font-weight:700;min-width:55px;text-align:center">${(it.price*it.qty).toFixed(2)}</div><button class="qb" onclick="POS.removeItem(${i})" style="color:var(--red)"><i class="fa-solid fa-trash-can" style="font-size:10px"></i></button></div>`).join('');
+    // §v1.1.93-FIX1: Use _mulCents/_toCents for line total display — matches confirmSale() cents engine exactly.
+    container.innerHTML=CART.map((it,i)=>{ const _ltc=_mulCents(_toCents(it.price),Math.max(1,parseInt(it.qty)||1)); return `<div class="bitem"><div><div class="biname">${escapeHtml(it.name)}</div><div class="biup">${it.price} ${s}/${it.unit}</div></div><div class="qrow"><button class="qb" onclick="POS.decQty('${it.id}')">−</button><input class="qin" type="number" value="${it.qty}" min="1" onchange="POS.updateQty('${it.id}',this.value)" style="width:54px;text-align:center"><button class="qb" onclick="POS.incQty('${it.id}')">+</button></div><div style="font-size:12px;font-weight:700;min-width:55px;text-align:center">${_fromCents(_ltc).toFixed(2)}</div><button class="qb" onclick="POS.removeItem(${i})" style="color:var(--red)"><i class="fa-solid fa-trash-can" style="font-size:10px"></i></button></div>`; }).join('');
     this.recalc();
   },
   // §POS-QTY: id-based qty methods — stable against re-render race conditions
@@ -9482,7 +9495,7 @@ const RETS = {
 
           const debtRec = DB.all('DEBTS').find(d=>d.invNum===_retInvRef.num||d.invId===_retInvRef.id);
           if(debtRec){
-            const newRemain = Math.max(0, Math.round((parseFloat(debtRec.remain||0)-amt)*100)/100);
+            const newRemain = Math.max(0, _fromCents(_subCents(_toCents(debtRec.remain||0), _toCents(amt))));
             const newStatus = newRemain<=0.001 ? 'مسدّد' : debtRec.status||'نشط';
             DB.update('DEBTS', debtRec.id, { remain:newRemain, status:newStatus });
           }
@@ -9729,7 +9742,7 @@ const RETS = {
       // Restore DEBTS record
       const debtRec = DB.all('DEBTS').find(d=>d.invNum===ret.inv||d.invId===ret.invId);
       if(debtRec){
-        const restored = Math.round((parseFloat(debtRec.remain||0)+parseFloat(ret.amt||0))*100)/100;
+        const restored = _fromCents(_addCents(_toCents(debtRec.remain||0), _toCents(ret.amt||0)));
         DB.update('DEBTS', debtRec.id, { remain:restored, status: restored>0?'نشط':'مسدّد' });
       }
       CALC.syncInvoiceStatus(ret.invId);
@@ -9768,7 +9781,7 @@ const PRODS = {
   render(){
     const srch=UI.val('prodSrch').toLowerCase(), cat=UI.val('prodCatF'), stat=UI.val('prodStatF'), s=getCurr();
     const cats=[...new Set(DB.all('PRODUCTS').map(p=>p.cat).filter(Boolean))];
-    const pf=document.getElementById('prodCatF'); if(pf) pf.innerHTML='<option>جميع الفئات</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+    const pf=document.getElementById('prodCatF'); if(pf) pf.innerHTML='<option>جميع الفئات</option>'+cats.map(c=>`<option>${escapeHtml(c)}</option>`).join('');
     const sortF=UI.val('prodSortF');
     let rows=DB.all('PRODUCTS').filter(p=>{ if(srch&&!p.name.toLowerCase().includes(srch)&&!(p.code||'').toLowerCase().includes(srch)) return false; if(cat&&cat!=='جميع الفئات'&&p.cat!==cat) return false; if(stat&&stat!=='جميع الحالات'&&p.status!==stat) return false; return true; });
     if(sortF==='name_asc') rows.sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'));
@@ -9865,7 +9878,7 @@ const INVT = {
     const kpiEl=document.getElementById('invtKPIs');
     if(kpiEl) kpiEl.innerHTML=`<div class="kpi kb"><div class="ki"><i class="fa-solid fa-boxes-stacking"></i></div><div class="kv2">${tot}</div><div class="klbl">إجمالي الوحدات</div></div><div class="kpi kg"><div class="ki"><i class="fa-solid fa-coins"></i></div><div class="kv2">${val.toFixed(0)} ${s}</div><div class="klbl">قيمة المخزون</div></div><div class="kpi kgr"><div class="ki"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="kv2">${low}</div><div class="klbl">متدنٍ</div></div><div class="kpi kr"><div class="ki"><i class="fa-solid fa-ban"></i></div><div class="kv2">${out}</div><div class="klbl">نفد</div></div>`;
     const cats=[...new Set(prods.map(p=>p.cat).filter(Boolean))];
-    const cf=document.getElementById('invtCatF'); if(cf) cf.innerHTML='<option>جميع الفئات</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+    const cf=document.getElementById('invtCatF'); if(cf) cf.innerHTML='<option>جميع الفئات</option>'+cats.map(c=>`<option>${escapeHtml(c)}</option>`).join('');
     const srch=UI.val('invtSrch').toLowerCase(), cat=UI.val('invtCatF'), lvl=UI.val('invtLvlF');
     const invtSortF=UI.val('invtSortF');
     let rows=prods.filter(p=>{ if(srch&&!p.name.toLowerCase().includes(srch)&&!(p.code||'').toLowerCase().includes(srch)) return false; if(cat&&cat!=='جميع الفئات'&&p.cat!==cat) return false; const st=parseFloat(p.stock||0); const mn=parseFloat(p.min||0); if(lvl&&lvl!=='جميع المستويات'){if(lvl==='نفد'&&st!==0)return false;if(lvl==='متدنٍ'&&!(st>0&&st<=mn))return false;if(lvl==='طبيعي'&&!(st>mn))return false;} return true; });
@@ -10378,8 +10391,8 @@ function exportDebtsPDF(){
       const liveStatus = remainCents<=0 ? 'مسددة' : d.status==='متأخر' ? 'متأخر' : 'نشط';
       const statusColor = liveStatus==='مسددة' ? '#16a34a' : liveStatus==='متأخر' ? '#dc2626' : '#d97706';
       return `<tr>
-        <td>${d.customer||'—'}</td>
-        <td class="center mono">${code}</td>
+        <td>${escapeHtml(d.customer||'—')}</td>
+        <td class="center mono">${escapeHtml(code)}</td>
         <td class="num">${_fromCents(origCents).toFixed(2)} ${s}</td>
         <td class="num green">${_fromCents(paidCents).toFixed(2)} ${s}</td>
         <td class="num" style="color:${remainCents>0?'#dc2626':'#16a34a'};font-weight:700">${_fromCents(remainCents).toFixed(2)} ${s}</td>
@@ -14243,33 +14256,61 @@ const RPTS = {
   },
 
   exportSupStatementPDF(){
+    // §v1.1.95-FIX2: Replaced jsPDF+Helvetica (no Arabic glyphs) with _buildPrintDoc
+    // (Cairo font + browser print engine — full RTL Arabic support, same as all other PDFs)
     const supId = UI.val('rplSupSelect');
     if(!supId){ TOAST.err('اختر مورداً أولاً'); return; }
     const sup = DB.all('SUPPLIERS').find(x=>x.id===supId);
     if(!sup){ return; }
-    TOAST.ok(`تصدير كشف حساب ${sup.name}...`);
     try{
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
       const s = getCurr();
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(16);
-      doc.text(`Supplier Statement: ${sup.name}`, 105, 20, {align:'center'});
-      doc.setFontSize(10);
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 28, {align:'center'});
+      const cfg = getCfg();
+      const storeName = cfg.pdfStoreName || cfg.storeName || 'SmartStorePOS';
       const invoices = DB.all('PURCHASE_INVOICES').filter(i=>i.supplierId===supId);
       const payments = DB.all('SUPPLIER_PAYMENTS').filter(p=>p.supplierId===supId);
       const returns  = DB.all('PURCHASE_RETURNS').filter(r=>r.supplierId===supId);
       const events = [
-        ...invoices.map(i=>({date:i.date,type:'Purchase Invoice',ref:i.invoiceNumber||'—',debit:parseFloat(i.total||0),credit:0})),
-        ...payments.map(p=>({date:p.date,type:'Payment',ref:'—',debit:0,credit:parseFloat(p.amount||0)})),
-        ...returns.map(r=>({date:r.date,type:'Return',ref:'—',debit:0,credit:parseFloat(r.totalReturnValue||0)})),
-      ].sort((a,b)=>a.date.localeCompare(b.date));
-      let bal = parseFloat(sup.openingBalance||0);
-      const body = events.map(ev=>{ bal+=ev.debit-ev.credit; return [ev.date,ev.type,ev.ref,ev.debit>0?ev.debit.toFixed(2):'',ev.credit>0?ev.credit.toFixed(2):'',bal.toFixed(2)+' '+s]; });
-      doc.autoTable({ startY:35, head:[['Date','Type','Ref','Debit','Credit','Balance']], body, styles:{fontSize:9} });
-      doc.save(`statement_${sup.name}_${todayISO()}.pdf`);
-    }catch(e){ TOAST.err('خطأ في التصدير'); }
+        ...invoices.map(i=>({date:i.date||'—', type:'فاتورة شراء', ref:i.invoiceNumber||'—', debit:_fromCents(_toCents(i.total||0)), credit:0})),
+        ...payments.map(p=>({date:p.date||'—', type:'دفعة', ref:p.reference||'—', debit:0, credit:_fromCents(_toCents(p.amount||0))})),
+        ...returns.map(r=>({date:r.date||'—', type:'مرتجع', ref:r.id?.slice(-6)||'—', debit:0, credit:_fromCents(_toCents(r.totalReturnValue||0))})),
+      ].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      let balCents = _toCents(sup.openingBalance||0);
+      let totalDebitCents = 0, totalCreditCents = 0;
+      const bodyRows = events.map(ev=>{
+        const debitCents  = _toCents(ev.debit);
+        const creditCents = _toCents(ev.credit);
+        balCents += debitCents - creditCents;
+        totalDebitCents  += debitCents;
+        totalCreditCents += creditCents;
+        const balColor = balCents > 0 ? '#dc2626' : '#16a34a';
+        return `<tr>
+          <td class="center">${ev.date}</td>
+          <td>${ev.type}</td>
+          <td class="center mono">${ev.ref}</td>
+          <td class="num" style="color:#dc2626">${debitCents>0?_fromCents(debitCents).toFixed(2)+' '+s:'—'}</td>
+          <td class="num green">${creditCents>0?_fromCents(creditCents).toFixed(2)+' '+s:'—'}</td>
+          <td class="num bold" style="color:${balColor}">${_fromCents(balCents).toFixed(2)} ${s}</td>
+        </tr>`;
+      }).join('');
+      const tDebit  = _fromCents(totalDebitCents);
+      const tCredit = _fromCents(totalCreditCents);
+      const tBal    = _fromCents(balCents);
+      const html = _buildPrintDoc({
+        title: `كشف حساب المورد — ${escapeHtml(sup.name)}`,
+        storeName,
+        subtitle: `${sup.contact||'—'} | ${sup.phone||'—'}`,
+        date: todayISO(),
+        orientation: 'landscape',
+        tableHead: `<tr><th>التاريخ</th><th>النوع</th><th>المرجع</th><th>مدين (عليه)</th><th>دائن (له)</th><th>الرصيد</th></tr>`,
+        tableBody: bodyRows,
+        summary: `
+          <div class="sum-row dark"><span>إجمالي المشتريات (مدين)</span><span>${tDebit.toFixed(2)} ${s}</span></div>
+          <div class="sum-row dark"><span>إجمالي الدفعات والمرتجعات (دائن)</span><span class="green">${tCredit.toFixed(2)} ${s}</span></div>
+          <div class="sum-row ${tBal>0.001?'red':'green-bg'}"><span>الرصيد النهائي</span><span>${tBal.toFixed(2)} ${s}</span></div>`
+      });
+      _openPrintWindow(html, `supplier-statement-${sup.name}`);
+      TOAST.ok('✓ تم فتح كشف حساب المورد — اختر "حفظ بصيغة PDF"');
+    }catch(e){ TOAST.err('خطأ في التصدير'); console.warn('[exportSupStatementPDF]',e); }
   },
 
   renderSupAnalysis(){
@@ -14470,47 +14511,58 @@ const RPTS = {
   },
 
   exportCashFlowPDF(){
+    // §v1.1.95-FIX3: Replaced jsPDF+Helvetica (no Arabic glyphs) with _buildPrintDoc
+    // (Cairo font + browser print engine — full RTL Arabic support, all labels in Arabic)
     try{
       const s = getCurr();
+      const cfg = getCfg();
+      const storeName = cfg.pdfStoreName || cfg.storeName || 'SmartStorePOS';
       const df = document.getElementById('rplCashDF')?.value||null;
       const dt = document.getElementById('rplCashDT')?.value||null;
       const data = CALC.getActualCashFlowData(df, dt);
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({orientation:'portrait', unit:'pt', format:'a4'});
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(16);
-      doc.text('Cash Flow Statement', 40, 50);
-      doc.setFontSize(10);
-      doc.setFont('helvetica','normal');
-      doc.text(`Period: ${df||'All'} to ${dt||'Today'}`, 40, 70);
-      const rows = [
-        ['Opening Balance', data.opening.toFixed(2)],
-        ['--- INFLOWS ---', ''],
-        ['Cash Sales & Debt Collections', '+'+data.inflows.sales.toFixed(2)],
-        ['Supplier Cash Refunds', '+'+data.inflows.refunds.toFixed(2)],
-        ['Exchange Differences (In)', '+'+data.inflows.exchangeIn.toFixed(2)],
-        ['Total Inflows', '+'+data.totalInflows.toFixed(2)],
-        ['--- OUTFLOWS ---', ''],
-        ['Operating Expenses', '-'+data.outflows.expenses.toFixed(2)],
-        ['Cash Purchases', '-'+data.outflows.purchases.toFixed(2)],
-        ['Supplier Payments', '-'+data.outflows.payments.toFixed(2)],
-        ['Exchange Differences (Out)', '-'+data.outflows.exchangeOut.toFixed(2)],
-        ['Total Outflows', '-'+data.totalOutflows.toFixed(2)],
-        ['CLOSING BALANCE', data.closing.toFixed(2)],
-        ['--- FINAL AVAILABLE CASH ---', ''],
-        ['Final Available Cash (النقد النهائي المتوفر)', CALC.getFinalAvailableCash(df, dt).toFixed(2)]
-      ];
-      doc.autoTable({
-        startY: 85,
-        head: [['Description', `Amount (${s})`]],
-        body: rows,
-        styles: { font:'helvetica', fontSize:10, halign:'left' },
-        headStyles: { fillColor:[16,185,129] },
-        columnStyles: { 1: { halign:'right' } }
+      const finalCash = CALC.getFinalAvailableCash(df, dt);
+      const periodLabel = df || dt ? `الفترة: ${df||'—'} إلى ${dt||'—'}` : 'كامل الفترة';
+
+      const mkRow = (label, val, cls='') => {
+        const color = cls==='in'?'#16a34a':cls==='out'?'#dc2626':cls==='head'?'#f59e0b':cls==='final'?'#0d9488':'';
+        const sign  = cls==='in'?'+':cls==='out'?'-':'';
+        const valStr = typeof val==='number' ? sign+val.toFixed(2)+' '+s : '';
+        return `<tr${cls==='head'?` style="background:rgba(245,158,11,.08)"`:''}><td style="font-weight:${cls==='head'||cls==='final'?'700':'500'};${color?'color:'+color:''}">${label}</td><td class="num" style="${color?'color:'+color+';':''} font-weight:${cls==='final'?'800':'600'}">${valStr}</td></tr>`;
+      };
+
+      const bodyRows = [
+        mkRow('الرصيد الافتتاحي', data.opening, ''),
+        mkRow('═══ الإيرادات ═══', null, 'head'),
+        mkRow('مبيعات نقدية وتحصيل ديون', data.inflows.sales, 'in'),
+        mkRow('مبالغ مردودة من الموردين', data.inflows.refunds, 'in'),
+        mkRow('فروق صرف (وارد)', data.inflows.exchangeIn, 'in'),
+        mkRow('إجمالي الإيرادات', data.totalInflows, 'in'),
+        mkRow('═══ المصروفات ═══', null, 'head'),
+        mkRow('مصاريف تشغيلية', data.outflows.expenses, 'out'),
+        mkRow('مشتريات نقدية', data.outflows.purchases, 'out'),
+        mkRow('دفعات للموردين', data.outflows.payments, 'out'),
+        mkRow('فروق صرف (صادر)', data.outflows.exchangeOut, 'out'),
+        mkRow('إجمالي المصروفات', data.totalOutflows, 'out'),
+        mkRow('الرصيد الختامي', data.closing, ''),
+        mkRow('النقد النهائي المتوفر (الصندوق)', finalCash, 'final'),
+      ].join('');
+
+      const html = _buildPrintDoc({
+        title: 'كشف التدفق النقدي',
+        storeName,
+        subtitle: periodLabel,
+        date: todayISO(),
+        orientation: 'portrait',
+        tableHead: `<tr><th>البند</th><th>المبلغ</th></tr>`,
+        tableBody: bodyRows,
+        summary: `
+          <div class="sum-row dark"><span>إجمالي الإيرادات</span><span class="green">+${data.totalInflows.toFixed(2)} ${s}</span></div>
+          <div class="sum-row dark"><span>إجمالي المصروفات</span><span style="color:#fca5a5">-${data.totalOutflows.toFixed(2)} ${s}</span></div>
+          <div class="sum-row ${finalCash>=0?'green-bg':'red'}"><span>النقد النهائي المتوفر</span><span>${finalCash.toFixed(2)} ${s}</span></div>`
       });
-      doc.save(`cash-flow-${df||'all'}-${dt||'today'}.pdf`);
-      TOAST.ok('✅ تم تصدير كشف التدفق النقدي');
-    }catch(e){ TOAST.err('خطأ في التصدير'); console.warn(e); }
+      _openPrintWindow(html, 'cash-flow');
+      TOAST.ok('✓ تم فتح كشف التدفق النقدي — اختر "حفظ بصيغة PDF"');
+    }catch(e){ TOAST.err('خطأ في التصدير'); console.warn('[exportCashFlowPDF]',e); }
   }
 };
 
@@ -14522,7 +14574,7 @@ function exportRptPDF(){
   const PANELS = ['rplPL','rplSales','rplStock','rplDebts','rplComprehensiveDebts','rplRet','rplSuppliers','rplCashFlow'];
   const activePanel = PANELS.map(id => document.getElementById(id)).find(el => el && el.style.display !== 'none');
   if(!activePanel){
-    TOAST.error('لا يوجد تقرير نشط للتصدير');
+    TOAST.err('لا يوجد تقرير نشط للتصدير'); // §v1.1.95-FIX1: TOAST.error→TOAST.err
     return;
   }
   // Resolve report title from the active tab button
@@ -14574,7 +14626,7 @@ function exportRptPDF(){
 </body>
 </html>`;
   const win = window.open('', '_blank', 'width=960,height=700,scrollbars=yes,resizable=yes');
-  if(!win){ TOAST.error('يرجى السماح بالنوافذ المنبثقة'); return; }
+  if(!win){ TOAST.err('يرجى السماح بالنوافذ المنبثقة'); return; } // §v1.1.95-FIX1
   win.document.write(printHtml);
   win.document.close();
   win.focus();
@@ -14963,6 +15015,8 @@ const PURCHASE_INV = {
     if(mode === 'quick') {
       PURCHASE_CART = [];
       this.renderItems();
+      // §v1.1.93-FIX2: Inform user that Quick Mode does NOT update inventory.
+      TOAST.warn('⚡ الوضع السريع: لن يتم تحديث المخزون. استخدمه للمشتريات غير المخزنة كالخدمات والمصاريف.');
     } else {
       UI.setVal('purInvGeneralDesc','');
       UI.setVal('purInvQuickTotal','');
@@ -16680,16 +16734,22 @@ const ADMIN_PAGE = {
     // §v1.1.68: Store filtered list for exportCSV()
     this._filteredUsers = users;
 
-    // §v1.1.68: Compute stats from filtered list + update cards
+    // §v1.1.95-FIX4: Align _renderTable stats with main KPI counters (status-first logic)
+    // Matches render() counting: active+valid expiry → active; cancelled/expired → expiredCancelled; else → pending
     let statActive = 0, statExpired = 0, statPending = 0;
     users.forEach(function(u) {
       const lic = licMap[u.uid];
       if (!lic) { statPending++; return; }
+      const st = String(lic.status || '').replace(/'/g, '').trim();
       let expiry = null;
-      try { expiry = lic.expiresAt && lic.expiresAt.toDate ? lic.expiresAt.toDate() : new Date(lic.expiresAt); } catch(_) {}
-      if (expiry && expiry > now && (!lic.status || lic.status === 'active')) statActive++;
-      else if (expiry && expiry < now) statExpired++;
-      else statPending++;
+      try { expiry = lic.expiresAt && lic.expiresAt.toDate ? lic.expiresAt.toDate() : (lic.expiresAt ? new Date(lic.expiresAt) : null); } catch(_) {}
+      if (st === 'active') {
+        if (expiry && expiry > now) { statActive++; } else { statExpired++; }
+      } else if (st === 'cancelled' || st === 'expired') {
+        statExpired++;
+      } else {
+        statPending++;
+      }
     });
     const _sv = function(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; };
     _sv('statTotal',   users.length);
@@ -16766,8 +16826,13 @@ const ADMIN_PAGE = {
             '<button class="btn bem bsm" style="font-family:\'Cairo\',sans-serif;margin-left:4px" ' +
               'onclick="ADMIN_PAGE.grantLicense(\'' + safeUid + '\',\'' + safeEmail + '\')">✅ منح</button>' +
             (!isSelf && lic ?
-              '<button class="btn bro bsm" style="font-family:\'Cairo\',sans-serif" ' +
-                'onclick="ADMIN_PAGE.revokeLicense(\'' + safeUid + '\')">🗑 حذف</button>'
+              '<button class="btn bro bsm" style="font-family:\'Cairo\',sans-serif;margin-left:4px" ' +
+                'onclick="ADMIN_PAGE.revokeLicense(\'' + safeUid + '\')">🗑 إلغاء</button>'
+            : '') +
+            // §v1.1.94: Delete user button — only for inactive (non-active) users, not self
+            (!isSelf ?
+              '<button class="btn bro bsm" style="font-family:\'Cairo\',sans-serif;background:#b91c1c;border-color:#b91c1c;margin-left:4px" ' +
+                'onclick="ADMIN_PAGE.deleteUser(\'' + safeUid + '\',\'' + safeEmail + '\')">🗑️ حذف نهائي</button>'
             : '');
         }
 
@@ -16803,13 +16868,13 @@ const ADMIN_PAGE = {
 
   // ── Grant license ─────────────────────────────────────────────
   grantLicense(uid, email) {
-    console.log('[AdminPage] grantLicense called — uid:', uid, '| email:', email);
+    if(window.DEV_MODE) console.log('[AdminPage] grantLicense called — uid:', uid, '| email:', email);
     const fbU = window._fbCurrentUser;
     if (!fbU) { console.error('[AdminPage] grantLicense: no _fbCurrentUser'); return; }
     if (fbU.email !== 'hamzaeldibo@gmail.com') { console.error('[AdminPage] grantLicense: not admin, got:', fbU.email); return; }
 
     const plan = prompt('اختر نوع الترخيص:\n  monthly  — شهر واحد\n  yearly   — سنة كاملة\n  trial    — تجريبي 7 أيام', 'monthly');
-    if (!plan) { console.log('[AdminPage] grantLicense: cancelled'); return; }
+    if (!plan) { if(window.DEV_MODE) console.log('[AdminPage] grantLicense: cancelled'); return; }
     const p = plan.trim().toLowerCase();
     if (!['monthly','yearly','trial'].includes(p)) { alert('نوع غير صحيح. استخدم: monthly أو yearly أو trial'); return; }
 
@@ -16818,7 +16883,7 @@ const ADMIN_PAGE = {
     else if (p === 'yearly') expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     else expiresAt.setDate(expiresAt.getDate() + 7);
 
-    console.log('[AdminPage] grantLicense: writing licenses/' + uid + ' | plan=' + p + ' | expires=' + expiresAt.toISOString());
+    if(window.DEV_MODE) console.log('[AdminPage] grantLicense: writing licenses/' + uid + ' | plan=' + p + ' | expires=' + expiresAt.toISOString());
     const ts   = firebase.firestore.FieldValue.serverTimestamp();
     const self = this;
     TOAST.warn('⏳ جاري منح الترخيص...');
@@ -16829,7 +16894,7 @@ const ADMIN_PAGE = {
       purchasedAt: ts, createdAt: ts
     })
     .then(function() {
-      console.log('[AdminPage] grantLicense: licenses doc written ✓');
+      if(window.DEV_MODE) console.log('[AdminPage] grantLicense: licenses doc written ✓');
       // §v1.1.84: if user has no users-doc (_fromLicOnly), create a minimal one via .set merge
       // so grantLicense / revokeLicense work for license-only users
       const userEntry = (self._allUsers||[]).find(function(u){ return u.uid === uid; });
@@ -16839,7 +16904,7 @@ const ADMIN_PAGE = {
       return op;
     })
     .then(function() {
-      console.log('[AdminPage] grantLicense: users doc updated ✓');
+      if(window.DEV_MODE) console.log('[AdminPage] grantLicense: users doc updated ✓');
       TOAST.ok('✓ تم منح ترخيص ' + p + ' لـ ' + (email||uid));
       setTimeout(function() { self.render(); }, 1000);
     })
@@ -16891,7 +16956,7 @@ const ADMIN_PAGE = {
 
   // ── Revoke license ────────────────────────────────────────────
   cancelLicense(uid, email) {
-    console.log('[AdminPage] cancelLicense called — uid:', uid);
+    if(window.DEV_MODE) console.log('[AdminPage] cancelLicense called — uid:', uid);
     const fbU = window._fbCurrentUser;
     if (!fbU) { console.error('[AdminPage] cancelLicense: no _fbCurrentUser'); return; }
     if (fbU.email !== 'hamzaeldibo@gmail.com') { console.error('[AdminPage] cancelLicense: not admin'); return; }
@@ -16906,7 +16971,7 @@ const ADMIN_PAGE = {
       cancelledBy: fbU.email
     })
     .then(function() {
-      console.log('[AdminPage] cancelLicense: status set to cancelled ✓');
+      if(window.DEV_MODE) console.log('[AdminPage] cancelLicense: status set to cancelled ✓');
       TOAST.ok('✓ تم إيقاف اشتراك المستخدم');
       setTimeout(function() { self.render(); }, 1000);
     })
@@ -16917,23 +16982,23 @@ const ADMIN_PAGE = {
   },
 
   revokeLicense(uid) {
-    console.log('[AdminPage] revokeLicense called — uid:', uid);
+    if(window.DEV_MODE) console.log('[AdminPage] revokeLicense called — uid:', uid);
     const fbU = window._fbCurrentUser;
     if (!fbU) { console.error('[AdminPage] revokeLicense: no _fbCurrentUser'); return; }
     if (fbU.email !== 'hamzaeldibo@gmail.com') { console.error('[AdminPage] revokeLicense: not admin'); return; }
     if (!confirm('هل أنت متأكد من إلغاء ترخيص هذا المستخدم؟\nسيتم حذف الترخيص وإعادة تعيين الخطة إلى pending.')) return;
 
     const self = this;
-    console.log('[AdminPage] revokeLicense: deleting licenses/' + uid);
+    if(window.DEV_MODE) console.log('[AdminPage] revokeLicense: deleting licenses/' + uid);
     TOAST.warn('⏳ جاري إلغاء الترخيص...');
 
     window._fbDb.collection('licenses').doc(uid).delete()
     .then(function() {
-      console.log('[AdminPage] revokeLicense: license deleted ✓');
+      if(window.DEV_MODE) console.log('[AdminPage] revokeLicense: license deleted ✓');
       return window._fbDb.collection('users').doc(uid).update({ plan: 'pending' });
     })
     .then(function() {
-      console.log('[AdminPage] revokeLicense: user plan reset ✓');
+      if(window.DEV_MODE) console.log('[AdminPage] revokeLicense: user plan reset ✓');
       TOAST.ok('✓ تم إلغاء الترخيص بنجاح');
       setTimeout(function() { self.render(); }, 1000);
     })
@@ -16941,6 +17006,39 @@ const ADMIN_PAGE = {
       console.error('[AdminPage] revokeLicense FAILED — code:', err.code, '| message:', err.message);
       TOAST.err('فشل إلغاء الترخيص: ' + (err.message||'خطأ غير معروف'));
     });
+  },
+
+  // ── §v1.1.94: Delete user permanently (users + licenses collections) ──────
+  // Only callable for non-active, non-self users. Deletes both Firestore docs.
+  // Does NOT delete Firebase Auth user (client-side deletion is not possible).
+  deleteUser(uid, email) {
+    const fbU = window._fbCurrentUser;
+    if (!fbU || fbU.email !== 'hamzaeldibo@gmail.com') { console.error('[AdminPage] deleteUser: not admin'); return; }
+    if (fbU.uid === uid) { TOAST.err('لا يمكن حذف حسابك الخاص'); return; }
+    if (!confirm('هل أنت متأكد من حذف هذا المستخدم نهائياً؟\n(' + (email||uid) + ')\n\nلا يمكن التراجع عن هذه العملية.')) return;
+
+    const self = this;
+    TOAST.warn('⏳ جاري حذف المستخدم...');
+    if(window.DEV_MODE) console.log('[AdminPage] deleteUser: uid=', uid);
+
+    const db = window._fbDb;
+    // Delete license doc (may not exist — ignore error)
+    const deleteLicense = db.collection('licenses').doc(uid).delete()
+      .catch(function(e){ if(window.DEV_MODE) console.warn('[AdminPage] deleteUser: license delete skipped:', e.code); });
+    // Delete user doc (may not exist — ignore error)
+    const deleteUserDoc = db.collection('users').doc(uid).delete()
+      .catch(function(e){ if(window.DEV_MODE) console.warn('[AdminPage] deleteUser: user delete skipped:', e.code); });
+
+    Promise.all([deleteLicense, deleteUserDoc])
+      .then(function() {
+        if(window.DEV_MODE) console.log('[AdminPage] deleteUser: both docs deleted ✓');
+        TOAST.ok('✓ تم حذف المستخدم بنجاح');
+        setTimeout(function() { self.render(); }, 1000);
+      })
+      .catch(function(err) {
+        console.error('[AdminPage] deleteUser FAILED:', err.code, err.message);
+        TOAST.err('فشل حذف المستخدم: ' + (err.message||'خطأ غير معروف'));
+      });
   }
 };
 
@@ -18008,15 +18106,15 @@ const SYSTEM_TEST = {
 
     // Safe console output — console.group not available in all environments (Edge mobile / WebView)
     if(typeof console.group === 'function'){
-      console.group('🧪 SmartStorePOS System Test');
-      log.forEach(l=>console.log(l));
-      console.log(`\nResult: ${passed} passed, ${failed} failed`);
-      console.groupEnd();
+      if(window.DEV_MODE) console.group('🧪 SmartStorePOS System Test');
+      log.forEach(l=>{ if(window.DEV_MODE) console.log(l); });
+      if(window.DEV_MODE) console.log(`\nResult: ${passed} passed, ${failed} failed`);
+      if(window.DEV_MODE) console.groupEnd();
     } else {
       // Fallback: flat console.log output
-      console.log('🧪 SmartStorePOS System Test');
-      log.forEach(l=>console.log(l));
-      console.log(`Result: ${passed} passed, ${failed} failed`);
+      if(window.DEV_MODE) console.log('🧪 SmartStorePOS System Test');
+      log.forEach(l=>{ if(window.DEV_MODE) console.log(l); });
+      if(window.DEV_MODE) console.log(`Result: ${passed} passed, ${failed} failed`);
     }
 
     if(failed===0){ TOAST.ok(`✓ System Test: جميع الاختبارات نجحت (${passed}/${passed})`); }
@@ -18523,7 +18621,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         }
       });
 
-    console.log('%c[Firebase] ✓ SDK Ready — Phase 1+2 active', 'color:#0d9488;font-weight:700');
+    if(window.DEV_MODE) console.log('%c[Firebase] ✓ SDK Ready — Phase 1+2 active', 'color:#0d9488;font-weight:700');
   } catch(e) {
     console.error('[Firebase] ✗ Init failed:', e);
   }
@@ -18540,12 +18638,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
     window._fbCurrentUser = fbUser || null;
 
     if (fbUser) {
-      console.log('%c[Firebase Auth] ✓ Signed in: ' + fbUser.email, 'color:#0d9488;font-weight:700');
+      if(window.DEV_MODE) console.log('%c[Firebase Auth] ✓ Signed in: ' + fbUser.email, 'color:#0d9488;font-weight:700');
 
       // §v1.1.52 fix: Check if app is already launched (main visible) — skip if so
       const mainEl = document.getElementById('main');
       if (mainEl && mainEl.style.display !== 'none' && mainEl.style.display !== '') {
-        console.log('[Firebase Auth] App already running — session confirmed.');
+        if(window.DEV_MODE) console.log('[Firebase Auth] App already running — session confirmed.');
         return;
       }
 
@@ -18572,7 +18670,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         .catch(function(e) { console.warn('[Users] upsert failed:', e.message); });
 
       if (fbUser.email === ADMIN_EMAIL) {
-        console.log('%c[License] ✓ Admin account — bypassing license check', 'color:#f59e0b;font-weight:700');
+        if(window.DEV_MODE) console.log('%c[License] ✓ Admin account — bypassing license check', 'color:#f59e0b;font-weight:700');
         window._doLaunchApp(fbUser);
         return;
       }
@@ -18609,7 +18707,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           }
 
           // ✅ Valid license — store plan, record verification timestamp, and launch
-          console.log('%c[License] ✓ Valid — plan: ' + (lic.plan||'?') + ' | expires: ' + expiry.toLocaleDateString('ar'), 'color:#0d9488;font-weight:700');
+          if(window.DEV_MODE) console.log('%c[License] ✓ Valid — plan: ' + (lic.plan||'?') + ' | expires: ' + expiry.toLocaleDateString('ar'), 'color:#0d9488;font-weight:700');
           window._fbLicensePlan = lic.plan || 'basic';
           // §v1.1.80: Save hardened verification timestamp for offline grace period
           window._licStoreTimestamp(Date.now());
@@ -18624,7 +18722,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           const elapsed = Date.now() - lastVerified;
           if (lastVerified > 0 && elapsed < GRACE_MS) {
             const hoursLeft = Math.ceil((GRACE_MS - elapsed) / 3600000);
-            console.log('%c[License] ✓ Offline grace — ' + hoursLeft + 'h remaining', 'color:#f59e0b;font-weight:700');
+            if(window.DEV_MODE) console.log('%c[License] ✓ Offline grace — ' + hoursLeft + 'h remaining', 'color:#f59e0b;font-weight:700');
             window._doLaunchApp(fbUser);
             window._startLicenseWatchdog(fbUser);
           } else {
@@ -18723,7 +18821,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         if (loginScreen) loginScreen.classList.add('hidden');
         APP.applySession(s);
         APP.launch();
-        console.log('[Firebase Auth] ✓ App launched for:', fbEmail);
+        if(window.DEV_MODE) console.log('[Firebase Auth] ✓ App launched for:', fbEmail);
       } else {
         console.error('[Firebase Auth] Could not create local session.');
       }
@@ -18823,14 +18921,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
     function recheck() {
       if (!navigator.onLine) {
-        console.log('[LicenseWatchdog] Offline — skipping recheck');
+        if(window.DEV_MODE) console.log('[LicenseWatchdog] Offline — skipping recheck');
         return;
       }
       const fbU = window._fbCurrentUser;
       if (!fbU || fbU.uid !== fbUser.uid) return; // user changed or signed out
       if (fbU.email === 'hamzaeldibo@gmail.com') return; // admin exempt
 
-      console.log('[LicenseWatchdog] Re-checking license for:', fbU.email);
+      if(window.DEV_MODE) console.log('[LicenseWatchdog] Re-checking license for:', fbU.email);
       window._fbDb.collection('licenses').doc(fbU.uid).get()
         .then(function(licDoc) {
           if (!licDoc.exists) {
@@ -18858,7 +18956,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           }
           // Still valid — refresh hardened timestamp
           window._licStoreTimestamp(Date.now());
-          console.log('[LicenseWatchdog] ✓ License still valid');
+          if(window.DEV_MODE) console.log('[LicenseWatchdog] ✓ License still valid');
         })
         .catch(function(e) { console.warn('[LicenseWatchdog] Check failed (offline?):', e.message); });
     }
@@ -18868,11 +18966,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
     // Re-check immediately when internet is restored
     window.addEventListener('online', function _onlineRecheck() {
-      console.log('[LicenseWatchdog] Back online — rechecking now');
+      if(window.DEV_MODE) console.log('[LicenseWatchdog] Back online — rechecking now');
       recheck();
     });
 
-    console.log('[LicenseWatchdog] Started — checks every 24h + on reconnect');
+    if(window.DEV_MODE) console.log('[LicenseWatchdog] Started — checks every 24h + on reconnect');
   };
 
   // ── 2. Hijack loginGoogleBtn to use Firebase popup ──
@@ -18894,7 +18992,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
         _fbAuth.signInWithPopup(provider)
           .then(function(result) {
-            console.log('[Firebase Auth] Popup sign-in success:', result.user.email);
+            if(window.DEV_MODE) console.log('[Firebase Auth] Popup sign-in success:', result.user.email);
             // onAuthStateChanged will handle launch
           })
           .catch(function(err) {
@@ -18922,22 +19020,16 @@ document.addEventListener('DOMContentLoaded', ()=>{
   _fbAuth.getRedirectResult()
     .then(function(result) {
       if (result && result.user) {
-        console.log('[Firebase Auth] Redirect sign-in success:', result.user.email);
+        if(window.DEV_MODE) console.log('[Firebase Auth] Redirect sign-in success:', result.user.email);
         // onAuthStateChanged will fire and handle launch
+    
       }
     })
     .catch(function(err) {
-      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        console.error('[Firebase Auth] Redirect result error:', err);
-        const lErr = document.getElementById('lErr');
-        if (lErr) {
-          lErr.textContent = 'فشل تسجيل الدخول: ' + (err.message || err.code);
-          lErr.classList.add('show');
-        }
-      }
+      console.error('[Firebase Auth] Redirect sign-in error:', err);
     });
 
-})(); // END §PHASE-FB-2
+})();
 </script>
 </body>
 </html>
