@@ -717,7 +717,7 @@
      ══════════════════════════════════════════════════════════════════════ -->
 <!-- Google Identity Services — Redirect OAuth 2.0 (cross-browser, no popups) -->
 <!-- GSI kept for renderButton as visual element only — all auth is handled by redirect flow -->
-<script src="https://accounts.google.com/gsi/client" async defer onload="GOOGLE_AUTH._onGSIReady()"></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.GOOGLE_AUTH?GOOGLE_AUTH._onGSIReady():(window._gsiPending=true)"></script>
 <style>
 :root{
   --bg:#0a0f1e;--bg2:#0f172a;--card:#131c35;--card2:#1a2440;--hover:#1e2d50;
@@ -1262,7 +1262,7 @@ function loginScreenRestore(){
 <!-- ═══ SETUP SCREEN (First Launch) ═══ -->
 <div class="screen" id="setupScreen">
   <div class="glass">
-    <div class="logo-c"><span class="em">🏪</span><h1>SmartStorePOS Gold</h1><p class="sub">نظام إدارة المتاجر الذكي</p><span class="vbadge">v1.1.95 — §FIX: PDF Arabic · TOAST.err · Admin stats</span></div>
+    <div class="logo-c"><span class="em">🏪</span><h1>SmartStorePOS Gold</h1><p class="sub">نظام إدارة المتاجر الذكي</p><span class="vbadge">v1.1.95 — §FIX: PDF Arabic · TOAST.err · Admin stats · GSI guard</span></div>
     <div class="sdots"><div class="sdot act" id="d1"></div><div class="sdot" id="d2"></div></div>
 
     <!-- Step 1: Owner Google Login (sp0 removed — info merged into login card) -->
@@ -4285,7 +4285,7 @@ function nowLocalFull(){
 // Schema version: bumped when DB structure changes.
 // ════════════════════════════════════════════════════════════════════
 const SCHEMA_VERSION = 3; // v3: integer cents storage, timestamp seq, two-phase migration
-const APP_VERSION    = '1.1.95'; // §v1.1.95: Fix TOAST.error→err; Sup/CashFlow PDF → Arabic _buildPrintDoc; Admin stats logic
+const APP_VERSION    = '1.1.95'; // §v1.1.95: Fix TOAST.error→err; Sup/CashFlow PDF → Arabic _buildPrintDoc; Admin stats logic; GSI timing guard
 // ═══════════════════════════════════════════════════════════════════════
 // §ROOT-CAUSE-FIX v10.8 — NOTES/RETURNS UI NOT UPDATING (FINAL FIX)
 // ───────────────────────────────────────────────────────────────────────
@@ -5961,6 +5961,7 @@ const GOOGLE_AUTH = {
   // ── Called when GSI script loads ──
   _onGSIReady(){
     this._gsiReady = true;
+    window._gsiPending = false; // §v1.1.95b: clear pending flag
     this._updateGSIStatus();
     // On GSI ready, render button in login containers if visible
     this._renderButtonsIfVisible();
@@ -6264,6 +6265,9 @@ const GOOGLE_AUTH = {
     }
   }
 };
+// §v1.1.95b: Deferred GSI init — if GSI loaded before GOOGLE_AUTH was parsed,
+// the onload guard set window._gsiPending=true. Call _onGSIReady() now.
+if(window._gsiPending){ try{ GOOGLE_AUTH._onGSIReady(); }catch(_){} }
 
 // ════════════════════════════════════════════════════════════════
 //  DRIVE_SYNC — Google Drive + Sheets Integration
