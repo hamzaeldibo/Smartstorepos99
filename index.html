@@ -1286,7 +1286,7 @@ function loginScreenRestore(){
       <!-- §v1.1.81: Plain-text email — no Cloudflare obfuscation -->
       <div style="margin-top:14px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid var(--bdr2);border-radius:9px;font-size:10px;color:var(--muted);text-align:center;line-height:1.8">
         <div style="font-weight:700;color:var(--txt);margin-bottom:4px;font-size:10.5px"><i class="fa-solid fa-headset" style="color:var(--blue);margin-left:4px"></i>للتواصل مع المطور والدعم الفني</div>
-        <div>📧 <strong style="color:var(--blue)">smartstorepos99@gmail.com</strong></div>
+        <div>📧 <strong style="color:var(--blue)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="82f1efe3f0f6f1f6edf0e7f2edf1bbbbc2e5efe3ebeeace1edef">[email&#160;protected]</a></strong></div>
       </div>
     </div>
 
@@ -1320,7 +1320,7 @@ function loginScreenRestore(){
     <div style="font-size:11px;color:var(--muted);margin-bottom:20px;line-height:1.8">
       للتواصل مع المطور والاشتراك:<br>
       <!-- §v1.1.81: Plain-text email — no Cloudflare obfuscation -->
-      <strong style="color:var(--blue)">smartstorepos99@gmail.com</strong>
+      <strong style="color:var(--blue)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8dfee0ecfff9fef9e2ffe8fde2feb4b4cdeae0ece4e1a3eee2e0">[email&#160;protected]</a></strong>
     </div>
     <button onclick="window._doLicenseSignOut()"
       style="background:var(--red);color:#fff;border:none;border-radius:10px;padding:12px 28px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%">
@@ -1349,7 +1349,7 @@ function loginScreenRestore(){
       <!-- §v1.1.81: Plain-text email — no Cloudflare obfuscation -->
       <div style="margin-top:14px;padding:10px 12px;background:rgba(255,255,255,.04);border:1px solid var(--bdr2);border-radius:9px;font-size:10px;color:var(--muted);text-align:center;line-height:1.8">
         <div style="font-weight:700;color:var(--txt);margin-bottom:4px;font-size:10.5px"><i class="fa-solid fa-headset" style="color:var(--blue);margin-left:4px"></i>للتواصل مع المطور والدعم الفني</div>
-        <div>📧 <strong style="color:var(--blue)">smartstorepos99@gmail.com</strong></div>
+        <div>📧 <strong style="color:var(--blue)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="55263834272126213a2730253a266c6c153238343c397b363a38">[email&#160;protected]</a></strong></div>
       </div>
     </div>
 
@@ -3510,7 +3510,7 @@ function loginScreenRestore(){
 </div></div>
 
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 
 // ════════════════════════════════════════════
 //  SmartStorePOS Gold v4.0
@@ -18598,9 +18598,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
           }
 
           if (lic.status === 'cancelled') {
-            console.warn('[License] License cancelled — blocking immediately');
-            try { _fbAuth.signOut(); } catch(_) {}
-            window._showLicenseScreen('تم إلغاء اشتراكك.\nللتواصل مع المطور: smartstorepos99@gmail.com');
+            console.warn('[License] License cancelled — showing cancellation modal');
+            window._showCancellationModal();
             return;
           }
           if (lic.status && lic.status !== 'active') {
@@ -18665,6 +18664,24 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const lm = document.getElementById('licenseMsg');
     if (lm) lm.innerHTML = msg.replace(/\n/g, '<br>');
     if (ls) ls.classList.remove('hidden');
+  };
+
+  // Show cancellation modal (user stays logged in until they click logout)
+  window._showCancellationModal = function() {
+    var modal = document.getElementById('cancellationModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'cancellationModal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
+      modal.innerHTML = '<div style="background:white;padding:30px;border-radius:12px;max-width:400px;width:90%;text-align:center;direction:rtl;"><h3 style="margin-top:0;color:#d32f2f;">تم إلغاء اشتراكك</h3><p style="font-size:16px;margin:20px 0;">للتواصل مع المطور والدعم الفني:<br><strong>smartstorepos99@gmail.com</strong></p><button id="cancelLogoutBtn" style="background:#d32f2f;color:white;border:none;padding:10px 24px;border-radius:6px;font-size:16px;cursor:pointer;">تسجيل الخروج</button></div>';
+      document.body.appendChild(modal);
+    } else {
+      modal.style.display = 'flex';
+    }
+    document.getElementById('cancelLogoutBtn').onclick = function() {
+      modal.style.display = 'none';
+      try { _fbAuth.signOut(); } catch(_) {}
+    };
   };
 
   // Sign out and return to login
@@ -18901,21 +18918,26 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   });
 
-  // ── 3. Handle redirect result (in case popup was blocked and redirect was used) ──
+  // ── 3. Handle redirect result (in case popup was blocked and browser redirected)
   _fbAuth.getRedirectResult()
     .then(function(result) {
       if (result && result.user) {
         console.log('[Firebase Auth] Redirect sign-in success:', result.user.email);
-        // onAuthStateChanged will handle launch
+        // onAuthStateChanged will fire and handle launch
       }
     })
     .catch(function(err) {
-      if (err.code && err.code !== 'auth/no-auth-event') {
-        console.error('[Firebase Auth] Redirect result error:', err.code, err.message);
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        console.error('[Firebase Auth] Redirect result error:', err);
+        const lErr = document.getElementById('lErr');
+        if (lErr) {
+          lErr.textContent = 'فشل تسجيل الدخول: ' + (err.message || err.code);
+          lErr.classList.add('show');
+        }
       }
     });
 
-})();
+})(); // END §PHASE-FB-2
 </script>
 </body>
 </html>
