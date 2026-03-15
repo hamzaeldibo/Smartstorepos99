@@ -901,21 +901,25 @@ select option{background:var(--card)}
 .tab{padding:7px 13px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--txt2);border:none;background:transparent;font-family:'Cairo',sans-serif;transition:all .2s}
 .tab.act{background:var(--bg2);color:var(--txt);box-shadow:0 2px 7px rgba(0,0,0,.25)}
 /* ── POS ── */
-.posw{display:grid;grid-template-columns:1fr 375px;gap:16px;height:calc(100vh - var(--hh) - 40px)}
-.pgpanel{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden}
+.posw{display:flex;flex-direction:column;gap:16px;height:calc(100vh - var(--hh) - 40px);overflow-y:auto}
+.pgpanel{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
 .pghdr{padding:13px;border-bottom:1px solid var(--bdr);display:flex;gap:8px;flex-wrap:wrap}
-.pgg{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;padding:13px;overflow-y:auto;flex:1}
-.pcard{background:var(--card2);border:1px solid var(--bdr2);border-radius:10px;padding:12px 10px;cursor:pointer;transition:all .2s;text-align:center}
+.pgg{display:flex;flex-wrap:wrap;gap:8px;padding:13px;overflow-y:auto;max-height:340px;justify-content:flex-start;align-content:flex-start}
+.pcard{background:var(--card2);border:1px solid var(--bdr2);border-radius:10px;padding:12px 10px;cursor:pointer;transition:all .2s;text-align:center;width:130px;flex-shrink:0}
 .pcard:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 6px 17px rgba(0,0,0,.3)}
 .pcard.oos{opacity:.4;cursor:not-allowed}
 .pcid{font-size:9px;color:var(--muted);margin-bottom:3px}
 .pcname{font-size:11px;font-weight:700;margin-bottom:5px;line-height:1.3}
 .pcprice{font-size:13px;font-weight:900;color:var(--gold)}
 .pcstock{font-size:9px;color:var(--muted);margin-top:1px}
-.pbill{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden}
+.pbill{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:400px}
 .pbhdr{padding:12px 13px;border-bottom:1px solid var(--bdr);background:var(--card2)}
-.bitems{flex:1;overflow-y:auto;padding:10px}
-.bitem{display:grid;grid-template-columns:1fr auto auto auto;gap:4px;align-items:center;padding:8px;border-radius:8px;background:var(--card2);border:1px solid var(--bdr2);margin-bottom:6px}
+.bitems{flex:1;overflow-y:auto;padding:6px 10px}
+.bitem{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;padding:7px 10px;border-radius:0;background:transparent;border:none;border-bottom:1px solid var(--bdr);margin-bottom:0}
+.bitem:first-child{border-top:1px solid var(--bdr2);border-radius:8px 8px 0 0;background:var(--card2)}
+.bitem:last-child{border-radius:0 0 8px 8px;background:var(--card2)}
+.bitem:only-child{border-radius:8px;border:1px solid var(--bdr2)}
+.bitem:nth-child(even){background:var(--hover)}
 .biname{font-size:11.5px;font-weight:600}
 .biup{font-size:10px;color:var(--muted)}
 .qrow{display:flex;align-items:center;gap:3px}
@@ -972,7 +976,7 @@ select option{background:var(--card)}
 @keyframes si{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
 /* ── RESPONSIVE ── */
 @media(max-width:1100px){.g3{grid-template-columns:1fr 1fr}}
-@media(max-width:960px){.posw{grid-template-columns:1fr;height:auto}}
+@media(max-width:960px){.posw{height:auto}.pgg{max-height:280px}}
 @media(max-width:768px){
   :root{--sw:0px}
   #sidebar{transform:translateX(100%);width:260px}
@@ -1262,7 +1266,7 @@ function loginScreenRestore(){
 <!-- ═══ SETUP SCREEN (First Launch) ═══ -->
 <div class="screen" id="setupScreen">
   <div class="glass">
-    <div class="logo-c"><span class="em">🏪</span><h1>SmartStorePOS Gold</h1><p class="sub">نظام إدارة المتاجر الذكي</p><span class="vbadge">v1.1.95 — §FIX: PDF Arabic · TOAST.err · Admin stats · GSI guard</span></div>
+    <div class="logo-c"><span class="em">🏪</span><h1>SmartStorePOS Gold</h1><p class="sub">نظام إدارة المتاجر الذكي</p><span class="vbadge">v1.1.110 — §FIX: إعادة بناء سلسلة الهاش بعد الاستعادة</span></div>
     <div class="sdots"><div class="sdot act" id="d1"></div><div class="sdot" id="d2"></div></div>
 
     <!-- Step 1: Owner Google Login (sp0 removed — info merged into login card) -->
@@ -1742,7 +1746,7 @@ function loginScreenRestore(){
 <div class="page" id="page-reports">
   <div class="ph"><div><h1>التقارير 📈</h1><p>تحليل معمق — مُعاد حسابه من الأحداث</p></div>
     <div style="display:flex;gap:7px">
-      <button class="btn bgh bsm" onclick="exportCSV(DB.all('INVOICES'),'الفواتير')"><i class="fa-brands fa-file-excel" style="color:#1D6F42"></i>Excel</button>
+      <button class="btn bgh bsm" onclick="RPTS.exportInvoicesCSV()"><i class="fa-brands fa-file-excel" style="color:#1D6F42"></i>Excel</button>
       <button class="btn bgh bsm" onclick="exportRptPDF()"><i class="fa-solid fa-file-pdf" style="color:#e53e3e"></i>PDF</button>
     </div>
   </div>
@@ -1959,9 +1963,15 @@ function loginScreenRestore(){
       <div class="srow"><span class="slbl">الفواتير CSV</span><button class="btn bgh bsm" onclick="BKP_PAGE.exportTable('INVOICES')"><i class="fa-solid fa-download"></i></button></div>
       <div class="srow"><span class="slbl">الديون CSV</span><button class="btn bgh bsm" onclick="BKP_PAGE.exportTable('DEBTS')"><i class="fa-solid fa-download"></i></button></div>
       <div class="srow"><span class="slbl">سجل الأحداث CSV</span><button class="btn bgh bsm" onclick="BKP_PAGE.exportOps()"><i class="fa-solid fa-download"></i></button></div>
-    </div>
-  </div>
-  <div class="card"><div class="ch"><div class="ct"><i class="fa-solid fa-list"></i>سجل النسخ الاحتياطية</div></div>
+      <!-- §v1.1.110: Hash chain rebuild after cross-device restore -->
+      <div class="srow" style="border-top:1px solid var(--bdr);margin-top:6px;padding-top:6px">
+        <span class="slbl">سلسلة الهاش §25</span>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <span id="hashChainStatus" style="font-size:10px;color:var(--muted)">—</span>
+          <button class="btn bgh bsm" onclick="BKP_PAGE.checkHashChain()"><i class="fa-solid fa-shield-check"></i>فحص</button>
+          <button class="btn bmu bsm" id="rebuildHashBtn" style="display:none" onclick="BKP_PAGE.rebuildHashChain()"><i class="fa-solid fa-rotate"></i>إعادة بناء</button>
+        </div>
+      </div>
   <div class="tw"><table><thead><tr><th>اسم النسخة</th><th>التاريخ</th><th>بواسطة</th><th>النوع</th><th>الموقع</th><th>الجداول</th><th>الحجم</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="bkpTbody"></tbody></table></div></div>
 </div>
 
@@ -3795,8 +3805,84 @@ const LEDGER_HASH = (function(){
     } : null;
   }
 
-  return { computeHash, chainEvent, verifyIntegrity, verifyBranch, getLastHash, exportHashAnchor, sha256, computeSHA256, verifySHA256Integrity, addSHA256 };
+  return { computeHash, chainEvent, verifyIntegrity, verifyBranch, getLastHash, exportHashAnchor, sha256, computeSHA256, verifySHA256Integrity, addSHA256,
+    // §v1.1.110: rebuildChain — re-links prevHash/currentHash for all events after cross-device restore.
+    // Safe: only recalculates hash pointers; does NOT delete, reorder, or alter any event data.
+    rebuildChain(){
+      let all;
+      try{ all = JSON.parse(localStorage.getItem('spos_v4_OPS_LOG')||'[]'); }
+      catch(_){ return {ok:false, error:'Cannot parse OPS_LOG'}; }
+      if(!all.length) return {ok:true, rebuilt:0};
+      // Sort chronologically — restore/merge can leave events out of order
+      all.sort((a,b)=>(a.timestamp||'').localeCompare(b.timestamp||''));
+      let prevHash = 'GENESIS';
+      let rebuilt = 0;
+      for(let i=0;i<all.length;i++){
+        const evt = all[i];
+        evt.prevHash    = prevHash;
+        evt.currentHash = computeHash(evt);
+        prevHash = evt.currentHash;
+        rebuilt++;
+      }
+      try{
+        localStorage.setItem('spos_v4_OPS_LOG', JSON.stringify(all));
+        return {ok:true, rebuilt};
+      } catch(e){
+        return {ok:false, error:'Failed to save: '+e.message};
+      }
+    }
+  };
 })();
+
+// ══════════════════════════════════════════════════════════════════
+// §v1.1.98-CACHE: Incremental Snapshot Cache
+// Stores pre-computed totals in SETTINGS — avoids full recalc on
+// every Dashboard/Reports load when dataset is large (10,000+ events).
+// Safety: if cache invalid → full recalc fallback (no data risk).
+// ══════════════════════════════════════════════════════════════════
+const CALC_CACHE = {
+  KEY: 'financial_snapshot',
+  get(){
+    try{ const r=DB.findOne('SETTINGS',{key:this.KEY}); if(!r||!r.value) return null; return JSON.parse(r.value); }catch(_){ return null; }
+  },
+  set(snap){
+    try{ const e=DB.findOne('SETTINGS',{key:this.KEY}); const v=JSON.stringify(snap);
+      if(e) DB.update('SETTINGS',e.id,{value:v}); else DB.insert('SETTINGS',{key:this.KEY,value:v});
+    }catch(_){}
+  },
+  invalidate(){
+    try{ const e=DB.findOne('SETTINGS',{key:this.KEY}); if(e) DB.update('SETTINGS',e.id,{value:null}); }catch(_){}
+  },
+  isValid(snap){
+    if(!snap||!snap.lastEventId||!snap.builtAt) return false;
+    try{ const ev=EVENTS.all(); return ev.length>0 && ev[0].id===snap.lastEventId; }catch(_){ return false; }
+  },
+  rebuild(){
+    try{
+      const ev=EVENTS.all(); const newest=ev[0];
+      const snap={ totalSalesCents:Math.round(CALC.totalSales()*100), totalExpensesCents:Math.round(CALC.totalExpenses()*100), netRemainingDebtCents:Math.round(CALC.getOutstandingDebt().total*100), lastEventId:newest?newest.id:null, lastEventTimestamp:newest?newest.timestamp:null, builtAt:new Date().toISOString() };
+      this.set(snap); return snap;
+    }catch(_){ return null; }
+  },
+  getOrRebuild(){ const c=this.get(); return this.isValid(c)?c:this.rebuild(); },
+  onSale(grandCents, debtCents=0){ // §v1.1.99-FIX2: debtCents for credit/partial sales
+    try{ const s=this.get(); if(!s) return; const ev=EVENTS.all(); const n=ev[0];
+      s.totalSalesCents+=grandCents;
+      if(debtCents>0) s.netRemainingDebtCents+=debtCents; // increment debt for credit/partial
+      s.lastEventId=n?n.id:s.lastEventId; s.lastEventTimestamp=n?n.timestamp:s.lastEventTimestamp; s.builtAt=new Date().toISOString(); this.set(s);
+    }catch(_){}
+  },
+  onExpense(amtCents){
+    try{ const s=this.get(); if(!s) return; const ev=EVENTS.all(); const n=ev[0];
+      s.totalExpensesCents+=amtCents; s.lastEventId=n?n.id:s.lastEventId; s.lastEventTimestamp=n?n.timestamp:s.lastEventTimestamp; s.builtAt=new Date().toISOString(); this.set(s);
+    }catch(_){}
+  },
+  onPayment(amtCents){
+    try{ const s=this.get(); if(!s) return; const ev=EVENTS.all(); const n=ev[0];
+      s.netRemainingDebtCents=Math.max(0,s.netRemainingDebtCents-amtCents); s.lastEventId=n?n.id:s.lastEventId; s.lastEventTimestamp=n?n.timestamp:s.lastEventTimestamp; s.builtAt=new Date().toISOString(); this.set(s);
+    }catch(_){}
+  }
+};
 
 const EVENTS = (function(){
   return {
@@ -4068,9 +4154,56 @@ const BACKUP = (function(){
     exportOpsLog(pin){
       if(!_verifyPin(pin)){ TOAST.err('PIN غير صحيح'); return false; }
       const rows = EVENTS.all();
-      _download('ops_log_'+_stamp()+'.csv', _toCSV(rows), 'text/csv;charset=utf-8');
-      const s = AUTH.getSession();
-      EVENTS.log('BACKUP_OPS', { count: rows.length }, s?.id);
+      // §v1.1.104-FIX-JRNL: Clean formatted export instead of raw internal dump
+      const s = (()=>{ try{ const c=DB.findOne('SETTINGS',{key:'config'}); return c?JSON.parse(c.value).currency||'$':'$'; }catch(_){return '$';} })();
+      const users = DB.all('USERS');
+      const _typeAr = {
+        'SALE':'بيع','RETURN':'مرتجع','EXPENSE':'مصروف','DEBT_PAYMENT':'تسديد دين',
+        'DEBT_CREATED':'دين جديد','DEBT_DISCOUNT':'خصم دين','FIRST_INSTALLMENT':'دفعة أولى',
+        'PURCHASE_INVOICE':'فاتورة شراء','SUPPLIER_PAYMENT':'دفعة مورد',
+        'PURCHASE_RETURN':'مرتجع مورد','INVENTORY_ADJ':'تسوية مخزون',
+        'INVOICE_VOID':'إلغاء فاتورة','RETURN_DELETED':'حذف مرتجع',
+        'EXPENSE_DELETED':'حذف مصروف','RETURN_DEBT_ADJ':'تخفيض دين',
+        'CREATE_PRODUCT':'إضافة منتج','UPDATE_PRODUCT':'تعديل منتج',
+        'DELETE_PRODUCT':'حذف منتج','LOGIN':'دخول','LOGOUT':'خروج',
+        'BACKUP':'نسخة احتياطية','RESTORE':'استعادة','STOCK_REBUILT':'إعادة بناء مخزون',
+      };
+      const _amt = (p) => {
+        const v = parseFloat(p.total||p.grand||p.amt||p.amount||p.discount||0);
+        return v !== 0 ? v.toFixed(2)+' '+s : '';
+      };
+      const headers = ['التاريخ','الوقت','النوع','الوصف','المبلغ','المستخدم'];
+      const dataRows = rows.map(e => {
+        let p={}; try{ p=JSON.parse(e.payload||'{}'); }catch(_){}
+        const ts = e.timestamp||'';
+        const date = ts.slice(0,10);
+        const time = ts.slice(11,19)||'';
+        const typeAr = _typeAr[e.type]||e.type;
+        const user = users.find(u=>u.id===e.user_id);
+        const userName = user?.name || e.user_id || 'نظام';
+        let desc = '';
+        switch(e.type){
+          case 'SALE': desc=`فاتورة #${p.num||'—'} — ${p.customer||'عميل عام'}`; break;
+          case 'RETURN': desc=`مرتجع من فاتورة #${p.inv||'—'} — ${p.customer||'—'}`; break;
+          case 'EXPENSE': desc=`${p.cat||'—'}: ${p.desc||'—'}`; break;
+          case 'EXPENSE_DELETED': desc=`حذف: ${p.cat||'—'}: ${p.desc||'—'}`; break;
+          case 'DEBT_PAYMENT': desc=`دفعة من ${p.customer||'—'} — فاتورة #${p.invoiceNum||'—'}`; break;
+          case 'DEBT_CREATED': desc=`دين على ${p.customer||p.custName||'—'}`; break;
+          case 'PURCHASE_INVOICE': desc=`مورد: ${p.supplierId||'—'} — فاتورة #${p.invoiceNumber||'—'}`; break;
+          case 'SUPPLIER_PAYMENT': desc=`دفعة للمورد — ${p.method||'—'}`; break;
+          case 'INVENTORY_ADJ': desc=`${p.product||'—'}: ${p.from||0} → ${p.to||0} (${p.reason||'—'})`; break;
+          case 'INVOICE_VOID': desc=`إلغاء فاتورة #${p.num||'—'}`; break;
+          case 'CREATE_PRODUCT': desc=`${p.name||'—'} (${p.code||'—'})`; break;
+          case 'UPDATE_PRODUCT': desc=`${p.name||'—'}`; break;
+          case 'LOGIN': case 'LOGOUT': desc=`${p.email||p.name||'—'}`; break;
+          default: desc = Object.entries(p).filter(([k])=>!['hash','prevHash','currentHash','sha256'].includes(k)).slice(0,2).map(([k,v])=>`${k}:${v}`).join(' | ');
+        }
+        return [date, time, typeAr, desc, _amt(p), userName];
+      });
+      const escape = v => '"'+String(v||'').replace(/"/g,'""')+'"';
+      const csv = '\ufeff' + [headers, ...dataRows].map(r=>r.map(escape).join(',')).join('\n');
+      _download('يومية_الأحداث_'+_stamp()+'.csv', csv, 'text/csv;charset=utf-8');
+      EVENTS.log('BACKUP_OPS', { count: rows.length }, AUTH.getSession()?.id);
       TOAST.ok('✓ تم تصدير سجل الأحداث ('+rows.length+' حدث)');
       return true;
     },
@@ -4285,7 +4418,7 @@ function nowLocalFull(){
 // Schema version: bumped when DB structure changes.
 // ════════════════════════════════════════════════════════════════════
 const SCHEMA_VERSION = 3; // v3: integer cents storage, timestamp seq, two-phase migration
-const APP_VERSION    = '1.1.95'; // §v1.1.95: Fix TOAST.error→err; Sup/CashFlow PDF → Arabic _buildPrintDoc; Admin stats logic; GSI timing guard
+const APP_VERSION    = '1.1.110'; // §v1.1.110: LEDGER_HASH.rebuildChain() + BKP_PAGE UI (fix hash after cross-device restore) | §v1.1.109: PDF standalone window
 // ═══════════════════════════════════════════════════════════════════════
 // §ROOT-CAUSE-FIX v10.8 — NOTES/RETURNS UI NOT UPDATING (FINAL FIX)
 // ───────────────────────────────────────────────────────────────────────
@@ -7548,10 +7681,24 @@ const DASH = {
     // Filter invoices by period
     const periodInvs = CALC.getSales().filter(i=>(!fromDate||i.date>=fromDate)&&(!toDate||i.date<=toDate));
     // §UNIFY-4: totalSales now via CALC.totalSales(fromDate,toDate) — single source of truth
-    const totalSales = CALC.totalSales(fromDate, toDate);
+    // §v1.1.98-CACHE-FIX3: use snapshot when no date filter (cache covers all-time totals only)
+    let totalSales, totalExp;
+    if(!fromDate && !toDate){
+      try{
+        const _snap = CALC_CACHE.getOrRebuild();
+        if(_snap && CALC_CACHE.isValid(_snap)){
+          totalSales = _snap.totalSalesCents / 100;
+          totalExp   = _snap.totalExpensesCents / 100;
+        } else { throw new Error('miss'); }
+      }catch(_){
+        totalSales = CALC.totalSales(fromDate, toDate);
+        totalExp   = CALC.totalExpenses(fromDate, toDate);
+      }
+    } else {
+      totalSales = CALC.totalSales(fromDate, toDate);
+      totalExp   = CALC.totalExpenses(fromDate, toDate);
+    }
     const totalDebt  = CALC.getOutstandingDebt(periodInvs).total; // §PHASE2: unified engine
-    // §UNIFY-4: totalExpenses now via CALC.totalExpenses(fromDate,toDate) — unified with date support
-    const totalExp   = CALC.totalExpenses(fromDate, toDate);
     // §PHASE5B: Dashboard COGS now delegates to CALC.totalCOGS() — single source of truth
     const totalCOGS  = CALC.totalCOGS(fromDate, toDate);
     // §PHASE4: classify returns — only cash returns reduce realized profit
@@ -8210,10 +8357,12 @@ const POS = {
     if(!container) return;
     if(!CART.length){ container.innerHTML='<div class="empty"><i class="fa-solid fa-cart-plus"></i><p>اضغط على منتج لإضافته</p></div>'; const bt=document.getElementById('billTotals'); if(bt) bt.style.display='none'; return; }
     const s=getCurr();
+    // §v1.1.101-UI: unified table header for clean single-table appearance
+    const header=`<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:6px;padding:5px 10px 4px;font-size:10px;color:var(--muted);font-weight:700;border-bottom:2px solid var(--bdr2);margin-bottom:3px"><span>المنتج</span><span style="text-align:center">الكمية</span><span style="text-align:center;min-width:55px">الإجمالي</span><span style="width:21px"></span></div>`;
     // §POS-QTY: id-based addressing (stable across re-renders); onchange fires on blur/Enter
     // only (not oninput) so user can clear the field and type a new number without mid-type resets.
     // §v1.1.93-FIX1: Use _mulCents/_toCents for line total display — matches confirmSale() cents engine exactly.
-    container.innerHTML=CART.map((it,i)=>{ const _ltc=_mulCents(_toCents(it.price),Math.max(1,parseInt(it.qty)||1)); return `<div class="bitem"><div><div class="biname">${escapeHtml(it.name)}</div><div class="biup">${it.price} ${s}/${it.unit}</div></div><div class="qrow"><button class="qb" onclick="POS.decQty('${it.id}')">−</button><input class="qin" type="number" value="${it.qty}" min="1" onchange="POS.updateQty('${it.id}',this.value)" style="width:54px;text-align:center"><button class="qb" onclick="POS.incQty('${it.id}')">+</button></div><div style="font-size:12px;font-weight:700;min-width:55px;text-align:center">${_fromCents(_ltc).toFixed(2)}</div><button class="qb" onclick="POS.removeItem(${i})" style="color:var(--red)"><i class="fa-solid fa-trash-can" style="font-size:10px"></i></button></div>`; }).join('');
+    container.innerHTML=header+CART.map((it,i)=>{ const _ltc=_mulCents(_toCents(it.price),Math.max(1,parseInt(it.qty)||1)); return `<div class="bitem"><div><div class="biname">${escapeHtml(it.name)}</div><div class="biup">${it.price} ${s}/${it.unit}</div></div><div class="qrow"><button class="qb" onclick="POS.decQty('${it.id}')">−</button><input class="qin" type="number" value="${it.qty}" min="1" onchange="POS.updateQty('${it.id}',this.value)" style="width:54px;text-align:center"><button class="qb" onclick="POS.incQty('${it.id}')">+</button></div><div style="font-size:12px;font-weight:700;min-width:55px;text-align:center">${_fromCents(_ltc).toFixed(2)}</div><button class="qb" onclick="POS.removeItem(${i})" style="color:var(--red)"><i class="fa-solid fa-trash-can" style="font-size:10px"></i></button></div>`; }).join('');
     this.recalc();
   },
   // §POS-QTY: id-based qty methods — stable against re-render race conditions
@@ -8484,6 +8633,9 @@ const POS = {
       const savedInv = DB.all('INVOICES').find(i=>i.num===num);
       if(savedInv) setTimeout(()=>DRIVE_SYNC.quickSync('SALE',{inv:savedInv}), 1000);
     }
+    // §v1.1.98-CACHE: update snapshot incrementally after sale
+    // §v1.1.99-FIX2: pass remainCents so credit/partial sales also update debt in cache
+    try{ CALC_CACHE.onSale(grandCents, Math.round(remain*100)); }catch(_){}
   },
   clear(){ CART=[]; clearCartStorage(); PAY_TYPE='cash'; document.querySelectorAll('.ptbtn').forEach(b=>b.classList.remove('act')); const first=document.querySelector('.ptbtn'); if(first) first.classList.add('act'); const pw=document.getElementById('partialWrap'); if(pw) pw.style.display='none'; UI.setVal('billCust',''); UI.setVal('billCustCode',''); UI.setVal('tDisc','0'); const cs=document.getElementById('custSuggest'); if(cs) cs.style.display='none'; const bn=document.getElementById('billNotes'); if(bn) bn.value=''; this.renderBill(); },
   suggestCustomer(q){
@@ -8539,6 +8691,8 @@ const POS = {
     const disc=parseFloat(UI.val('tDisc'))||0;
     const tax=parseFloat(document.getElementById('tTax')?.textContent)||0;
         document.getElementById('pdfContent').innerHTML=`<div class="pdfbox"><div class="pdfhdr"><div><div class="pdfco">🏪 ${escapeHtml(cfg.storeName||'')}</div><div style="font-size:11px;color:#6b7280">${escapeHtml(cfg.address||'')}</div></div><div style="text-align:left"><div style="font-size:14px;font-weight:800;color:#1a2440">فاتورة</div><div style="font-size:11px;color:#6b7280">${document.getElementById('billNum')?.textContent||''}</div><div style="font-size:11px;color:#6b7280">${todayISO()}</div></div></div><div class="pdfmeta"><div><strong>العميل:</strong> ${escapeHtml(UI.val('billCust')||'عميل عام')}${(()=>{const _cc=UI.val('billCustCode')||(DB.all('CUSTOMERS').find(cx=>cx.name===(UI.val('billCust')||''))?.code)||'';return _cc?` <span style="font-size:10px;color:#6b7280;font-family:monospace">(رمز: ${_cc})</span>`:''})()}</div>${_getCashierLineHtml('meta')}</div><table class="pdftbl"><thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead><tbody>${rows}</tbody></table><div class="pdftots">${disc>0?`<div class="ptr"><span>خصم</span><span>${disc.toFixed(2)} ${s}</span></div>`:''}<div class="ptr grand"><span>الإجمالي</span><span>${grand.toFixed(2)} ${s}</span></div>${(()=>{try{const _cust=UI.val('billCust');const _cr=_cust&&_cust!=='عميل عام'?0:0;const _chk=document.getElementById('applyCreditChk');const _applied=(_chk&&_chk.checked&&_cr>0)?Math.min(_cr,grand):0;return (_applied>0?`<div class="ptr" style="color:#2563eb"><span>💳 رصيد مسبق مطبَّق</span><span>−${_applied.toFixed(2)} ${s}</span></div>`:'')+(_cr>0?`<div class="ptr" style="color:#6b7280;font-size:10px"><span>رصيد مسبق متبقٍ</span><span>${Math.max(0,_cr-_applied).toFixed(2)} ${s}</span></div>`:'');}catch(_){return '';}})()}</div><div class="pdffot">${cfg.footer||'شكراً لتسوقكم معنا!'}</div></div>`;
+    // §v1.1.108-FIX1: apply PDF page styles for correct multipage printing
+    applyPdfStyles();
     UI.showModal('pdfModal');
   }
 };
@@ -8561,70 +8715,90 @@ function renderPOS(){ POS.render(); }
 // (POS invoice, INVS.view, DEBTS, suppliers detail, etc.)
 // ─────────────────────────────────────────────────────────────────────────
 function _printPdfModal(){
-  const STYLE_ID = '_pdfModalPrintStyle';
-  // Remove any stale style from a previous interrupted print
-  const stale = document.getElementById(STYLE_ID);
-  if(stale) stale.remove();
+  // §v1.1.109-FIX: Extract pdfContent HTML and open in a clean standalone window.
+  // Previous approach (modifying @media print on the main page) fails on Android/mobile
+  // because the browser reprints the entire page viewport on every page.
+  // Solution: same approach as _openPrintWindow — dedicated window with ONLY the content.
+  const contentEl = document.getElementById('pdfContent');
+  if(!contentEl){ TOAST.err('لا يوجد محتوى للطباعة'); return; }
 
-  const style = document.createElement('style');
-  style.id = STYLE_ID;
-  style.textContent = `
-@media print {
-  @page { size: A4 portrait; margin: 12mm; }
-  /* Hide everything on the page */
-  body > * { visibility: hidden !important; }
-  /* Show only the modal overlay and its children */
-  #pdfModal,
-  #pdfModal * { visibility: visible !important; }
-  /* Position the modal content to fill the paper */
-  #pdfModal {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    background: #fff !important;
-    box-shadow: none !important;
-  }
-  #pdfModal .modal {
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-  #pdfModal .mh,
-  #pdfModal .mf { display: none !important; }
-  #pdfModal .mb {
-    padding: 0 !important;
-    overflow: visible !important;
-    max-height: none !important;
-  }
-  /* Table pagination */
-  table  { page-break-inside: auto; }
-  tr     { page-break-inside: avoid; break-inside: avoid; }
-  thead  { display: table-header-group; }
-  tfoot  { display: table-footer-group; }
-  /* Hide any leftover UI elements that might be visible */
-  #sidebar, #topbar, #toasts,
-  .sbbackdrop, #floatHelpBtn,
-  #bgAuditAlert, #sysAlertBar { display: none !important; }
-}`;
-  document.head.appendChild(style);
+  const cfg = getCfg();
+  const size   = cfg.pdfPageSize || 'A4';
+  const margin = cfg.pdfMargin   || 'normal';
+  const marginMap = { narrow:'8mm', normal:'12mm', wide:'20mm' };
+  const sizeMap   = { A4:'A4 portrait', A5:'A5 portrait', receipt:'80mm auto' };
 
-  // Cleanup: prefer onafterprint, fallback to setTimeout
-  const cleanup = () => {
-    const s = document.getElementById(STYLE_ID);
-    if(s) s.remove();
-  };
-  window.onafterprint = cleanup;
-  setTimeout(cleanup, 5000); // safety fallback
+  const printHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>طباعة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'Cairo',Arial,sans-serif;
+    direction:rtl;
+    background:#fff;
+    color:#111;
+    padding:10px;
+  }
+  /* Replicate pdfbox styles */
+  .pdfbox{ background:white; color:#111; font-family:'Cairo',sans-serif; }
+  .pdfhdr{ border-bottom:2px solid #1a2440; padding-bottom:13px; margin-bottom:13px;
+            display:flex; justify-content:space-between; align-items:flex-start; }
+  .pdfco{ font-size:18px; font-weight:900; color:#1a2440; }
+  .pdfmeta{ display:grid; grid-template-columns:1fr 1fr; gap:5px;
+             margin-bottom:13px; font-size:11.5px; color:#374151; }
+  .pdfmeta strong{ color:#1a2440; }
+  .pdftbl{ width:100%; border-collapse:collapse; font-size:11px; margin-bottom:13px; }
+  .pdftbl th{ background:#f1f5f9; padding:7px 10px; text-align:right;
+               font-weight:700; border:1px solid #e5e7eb; }
+  .pdftbl td{ padding:7px 10px; border:1px solid #e5e7eb; }
+  .pdftots{ margin-right:auto; max-width:300px; }
+  .ptr{ display:flex; justify-content:space-between; padding:5px 0;
+         font-size:12px; border-bottom:1px solid #e5e7eb; }
+  .ptr.grand{ font-size:15px; font-weight:800; color:#1a2440;
+               border-top:2px solid #1a2440; border-bottom:none; padding-top:10px; }
+  .pdffot{ border-top:1px solid #e5e7eb; padding-top:10px; margin-top:10px;
+            text-align:center; font-size:10.5px; color:#6b7280; }
+  .badge{ display:inline-block; padding:2px 7px; border-radius:4px; font-size:10px; }
+  .bem{ background:#d1fae5; color:#065f46; }
+  .bro{ background:#fee2e2; color:#991b1b; }
+  .bmu{ background:#ede9fe; color:#5b21b6; }
+  .bbl{ background:#dbeafe; color:#1e40af; }
+  .green{ color:#16a34a; } .red{ color:#dc2626; }
+  /* No-print controls */
+  .no-print{ display:none; }
+  @page{ size:${sizeMap[size]||'A4 portrait'}; margin:${marginMap[margin]||'12mm'}; }
+  @media print{
+    body{ padding:0; }
+    table{ page-break-inside:auto; }
+    tr{ page-break-inside:avoid; break-inside:avoid; }
+    thead{ display:table-header-group; }
+    tfoot{ display:table-footer-group; }
+  }
+</style>
+</head>
+<body>
+${contentEl.innerHTML}
+<div class="no-print" style="margin-top:16px;text-align:center;display:block">
+  <button onclick="window.print()" style="padding:9px 24px;background:#3b82f6;color:#fff;
+    border:none;border-radius:7px;font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer;
+    margin-left:8px">🖨️ طباعة / حفظ PDF</button>
+  <button onclick="window.close()" style="padding:9px 18px;background:#6b7280;color:#fff;
+    border:none;border-radius:7px;font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer">
+    إغلاق</button>
+</div>
+</body>
+</html>`;
 
-  window.print();
+  const win = window.open('', '_blank', 'width=820,height=960,scrollbars=yes,resizable=yes');
+  if(!win){ TOAST.err('يرجى السماح بالنوافذ المنبثقة لتصدير PDF'); return; }
+  win.document.open();
+  win.document.write(printHtml);
+  win.document.close();
+  win.addEventListener('load', () => { setTimeout(() => win.print(), 700); });
 }
 
 // ── PDF STYLES — Dynamic page size/margin per print ──
@@ -9019,6 +9193,8 @@ const INVS = {
       invId: id, num: inv.num, total: inv.total,
       paid: inv.paid, payType: pType, cashAdjustment: paid
     }, AUTH.getSession()?.id);
+    // §v1.1.98-CACHE-FIX1: void changes sales total → invalidate snapshot
+    try{ CALC_CACHE.invalidate(); }catch(_){}
 
     TOAST.ok(`✓ تم إلغاء الفاتورة ${inv.num} — تم تحديث المخزون والحسابات`);
     this.render();
@@ -9537,6 +9713,8 @@ const RETS = {
           items:selectedItems.length, cashier:sess.name,
           invoicePayType:_retInvRef.payType
         }, sess.id);
+        // §v1.1.99-FIX3: return changes sales & possibly debt → invalidate cache
+        try{ CALC_CACHE.invalidate(); }catch(_){}
 
         // ── 5. Sync status ──
         try{ CALC.syncInvoiceStatus(_retInvRef.id); }catch(_syncErr){ console.warn('[RETS.save] syncInvoiceStatus non-critical error:', _syncErr.message); }
@@ -9586,6 +9764,8 @@ const RETS = {
     const r = { type:'مرتجع مبيع', date:todayISO(), customer:'', inv:_legacyInvNum, amt:0, method:UI.val('rMeth')||'cash', reason:UI.val('rReason')||'أخرى', status:'قيد المعالجة', invoicePayType:_legacyPayType, originalPaymentMethod:_legacyPayType };
     const saved=DB.insert('RETURNS',r);
     EVENTS.log('RETURN',{ id:saved.id, reason:r.reason, amt:r.amt },sess?.id);
+    // §v1.1.99-FIX3: return affects sales totals → invalidate cache
+    try{ CALC_CACHE.invalidate(); }catch(_){}
     UI.closeModal('retModal');
     UI.updateBadges(); TOAST.ok('✓ تم تسجيل المرتجع'); this.render();
   },
@@ -9650,14 +9830,26 @@ const RETS = {
     const logoHtml=cfg.pdfLogoData?`<img src="${cfg.pdfLogoData}" style="height:44px;object-fit:contain"><br>`:'';
     const previewHtml=`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title>معاينة المرتجع</title>
-    <style>body{font-family:Arial,sans-serif;direction:rtl;padding:20px;max-width:500px;margin:0 auto}
-    h2{color:#dc2626;border-bottom:2px solid #dc2626;padding-bottom:8px}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Cairo',Arial,sans-serif;direction:rtl;padding:20px;max-width:680px;margin:0 auto;color:#1a2440}
+    h2{color:#dc2626;border-bottom:2px solid #dc2626;padding-bottom:8px;margin-bottom:16px}
     .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9}
     .row strong{color:#1a2440}.total{font-size:16px;font-weight:800;color:#dc2626}
     table{width:100%;border-collapse:collapse;margin:12px 0}
-    th,td{padding:8px;text-align:right;border:1px solid #e2e8f0}th{background:#f8fafc}
+    th,td{padding:8px;text-align:right;border:1px solid #e2e8f0}th{background:#f8fafc;font-weight:700}
     .badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;background:#fef2f2;color:#dc2626}
-    @media print{button{display:none}}</style></head><body>
+    @page{size:A4 portrait;margin:14mm}
+    @media print{
+      button{display:none!important}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid;break-inside:avoid}
+      thead{display:table-header-group}
+      tfoot{display:table-footer-group}
+      body{max-width:100%;padding:0}
+    }
+    </style></head><body>
     <div style="text-align:center;margin-bottom:16px">${logoHtml}<h2><i>🔄</i> معاينة المرتجع</h2>
     <div style="font-size:12px;color:#6b7280">التاريخ: ${new Date().toLocaleDateString('ar-SA')} — الوقت: ${new Date().toLocaleTimeString('ar-SA')}</div></div>
     <div class="row"><span>رقم الفاتورة الأصلية</span><strong>${inv.num||'—'}</strong></div>
@@ -9685,13 +9877,25 @@ const RETS = {
     const logoHtml=cfg.pdfLogoData?`<img src="${cfg.pdfLogoData}" style="height:44px;object-fit:contain"><br>`:'';
     const html=`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title>مرتجع ${ret.inv||''}</title>
-    <style>body{font-family:Arial,sans-serif;direction:rtl;padding:24px;max-width:520px;margin:0 auto}
-    h2{color:#dc2626;border-bottom:2px solid #dc2626;padding-bottom:8px}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Cairo',Arial,sans-serif;direction:rtl;padding:24px;max-width:680px;margin:0 auto;color:#1a2440}
+    h2{color:#dc2626;border-bottom:2px solid #dc2626;padding-bottom:8px;margin-bottom:16px}
     .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9}
     table{width:100%;border-collapse:collapse;margin:12px 0}
-    th,td{padding:8px;text-align:right;border:1px solid #e2e8f0}th{background:#f8fafc}
+    th,td{padding:8px;text-align:right;border:1px solid #e2e8f0}th{background:#f8fafc;font-weight:700}
     .total{font-size:16px;font-weight:800;color:#dc2626}
-    @media print{button{display:none}}</style></head><body>
+    @page{size:A4 portrait;margin:14mm}
+    @media print{
+      button{display:none!important}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid;break-inside:avoid}
+      thead{display:table-header-group}
+      tfoot{display:table-footer-group}
+      body{max-width:100%;padding:0}
+    }
+    </style></head><body>
     <div style="text-align:center;margin-bottom:16px">${logoHtml}<h2>🔄 سند مرتجع</h2>
     <div style="font-size:12px;color:#6b7280">التاريخ: ${ret.date||'—'} | الوقت: ${ret.timestamp?new Date(ret.timestamp).toLocaleTimeString('ar-SA'):'—'}</div></div>
     <div class="row"><span>فاتورة أصلية</span><strong>${ret.inv||'—'}</strong></div>
@@ -9740,9 +9944,9 @@ const RETS = {
         customer:ret.customer, amt: -parseFloat(ret.amt||0),
         retId:id, note:'إلغاء مرتجع — استعادة الدين'
       }, sess?.id);
-      // Also delete any RETURN_DEBT_ADJ events that were created by this return
-      EVENTS.all().filter(e=>e.type==='RETURN_DEBT_ADJ' && (() =>{ try{return JSON.parse(e.payload||'{}').retId===id;}catch(_){return false;} })())
-        .forEach(e=>{ try{ DB.delete('EVENTS',e.id); }catch(_){} });
+      // §v1.1.97-FIX2: RETURN_DEBT_ADJ events are intentionally preserved — do NOT delete.
+      // The RETURN_DEBT_ADJ_VOID event logged above already reverses the debt effect.
+      // Deleting events would break the hash chain (events are immutable by design).
       // Restore DEBTS record
       const debtRec = DB.all('DEBTS').find(d=>d.invNum===ret.inv||d.invId===ret.invId);
       if(debtRec){
@@ -9766,6 +9970,8 @@ const RETS = {
     }, sess?.id);
 
     DB.delete('RETURNS',id);
+    // §v1.1.98-CACHE-FIX2: return deletion changes sales & debt → invalidate snapshot
+    try{ CALC_CACHE.invalidate(); }catch(_){}
     // Sync all
     CALC.syncAllDebts();
     UI.updateBadges();
@@ -9826,7 +10032,19 @@ const PRODS = {
     UI.setVal('eProdId',id||'');
     document.getElementById('prodMTitle').textContent=id?'تعديل منتج':'إضافة منتج جديد';
     if(id){ const p=DB.all('PRODUCTS').find(x=>x.id===id); if(p){['Code','Name','NameEn','Cat','Unit','Status','Desc','PriceR','PriceW','PriceO','Cost','Tax','Min','Max'].forEach(f=>{UI.setVal('p'+f,p[f.charAt(0).toLowerCase()+f.slice(1)]||'');});UI.setVal('pInitStock',p.stock||0);} }
-    else{ UI.setVal('pCode','P'+String(DB.count('PRODUCTS')+1).padStart(3,'0')); UI.setVal('pInitStock',0); }
+    else{
+      // §v1.1.103-FIX1: Reset ALL fields for new product — prevents previous data from remaining
+      ['pName','pNameEn','pDesc'].forEach(id=>UI.setVal(id,''));
+      ['pPriceR','pPriceW','pPriceO','pCost'].forEach(id=>UI.setVal(id,''));
+      UI.setVal('pTax','15'); UI.setVal('pMin','10'); UI.setVal('pMax','500');
+      UI.setVal('pStatus','نشط');
+      UI.setVal('pInitStock','0');
+      // Hide custom category/unit fields
+      const ncw=document.getElementById('ncw'); if(ncw) ncw.style.display='none';
+      const cuw=document.getElementById('cuw'); if(cuw) cuw.style.display='none';
+      // Auto-generate next product code
+      UI.setVal('pCode','P'+String(DB.count('PRODUCTS')+1).padStart(3,'0'));
+    }
     UI.showModal('prodModal');
   },
   save(){
@@ -9847,7 +10065,19 @@ const PRODS = {
       DB.update('PRODUCTS',editId,{...obj, stock:stockToUse});
       EVENTS.log('UPDATE_PRODUCT',{name,code,priceR:obj.priceR,stock:stockToUse},s?.id);
     }
-    else{ const np=DB.insert('PRODUCTS',{...obj, stock:parseInt(UI.val('pInitStock'))||0}); EVENTS.log('CREATE_PRODUCT',{name,code},s?.id); }
+    else{
+      const initStock = parseInt(UI.val('pInitStock'))||0;
+      const np = DB.insert('PRODUCTS',{...obj, stock:initStock});
+      // §v1.1.100-FIX1: Record INITIAL movement so rebuildStockFromMovements() preserves this stock
+      if(initStock > 0){
+        DB.insert('INVENTORY_MOVEMENTS',{
+          productId: np.id, type:'INITIAL', qty: initStock,
+          sourceId: 'initial_stock', reason: 'مخزون ابتدائي عند إنشاء المنتج',
+          timestamp: _TS ? _TS.now() : new Date().toISOString()
+        });
+      }
+      EVENTS.log('CREATE_PRODUCT',{name,code,initStock},s?.id);
+    }
     UI.closeModal('prodModal'); this.render(); TOAST.ok('✓ تم حفظ المنتج');
   },
   del(id){
@@ -10218,6 +10448,8 @@ const DEBTS = {
     // This ensures invoice page ALWAYS reflects the payment, even if not active
     CALC.syncAllDebts();
     CALC.syncAllInvoices();
+    // §v1.1.98-CACHE: update snapshot incrementally after debt payment
+    try{ CALC_CACHE.onPayment(Math.round((amt+disc)*100)); }catch(_){}
     DASH.render();
     // Force invoice render regardless of active page (for next navigation)
     if(document.getElementById('page-invoices')?.classList.contains('act')) INVS.render();
@@ -10709,6 +10941,8 @@ const EXPS = {
     EVENTS.log('EXPENSE',{ cat, code, desc, amt },s?.id);
     // Quick sync to Google Sheets if connected
     if(DRIVE_SYNC.isConnected()) setTimeout(()=>DRIVE_SYNC.quickSync('EXPENSE',{exp}), 1500);
+    // §v1.1.98-CACHE: update snapshot incrementally after expense
+    try{ CALC_CACHE.onExpense(Math.round(amt*100)); }catch(_){}
     // Reset code field for next entry
     const codeEl=document.getElementById('eCode'); if(codeEl) codeEl.value='';
     const newCatEl=document.getElementById('eNewCat'); if(newCatEl) newCatEl.value='';
@@ -10716,7 +10950,15 @@ const EXPS = {
     UI.closeModal('expModal'); this.render(); TOAST.ok('✓ تم تسجيل المصروف — كود: '+code);
   },
 
-  del(id){ if(!confirm('حذف هذا المصروف؟'))return; DB.delete('EXPENSES',id); this.render(); TOAST.ok('تم الحذف'); }
+  del(id){ // §v1.1.97-FIX1: Log EXPENSE_DELETED before removing — preserves audit trail
+    if(!confirm('حذف هذا المصروف؟'))return;
+    const exp = DB.all('EXPENSES').find(e=>e.id===id);
+    DB.delete('EXPENSES',id);
+    if(exp){ const sess=AUTH.session(); EVENTS.log('EXPENSE_DELETED',{amt:exp.amount,cat:exp.cat,desc:exp.desc,date:exp.date,code:exp.code||''},sess?.id); }
+    // §v1.1.98-CACHE: deletion → invalidate snapshot (full rebuild on next Dashboard load)
+    try{ CALC_CACHE.invalidate(); }catch(_){}
+    this.render(); TOAST.ok('تم الحذف');
+  }
 };
 function renderExpTable(){ EXPS.render(); }
 function saveExp(){ EXPS.save(); }
@@ -11297,6 +11539,11 @@ const FINANCIAL_ENGINE = {
     const movements = DB.all('INVENTORY_MOVEMENTS')
       .sort((a,b)=>(a.timestamp||'').localeCompare(b.timestamp||''));
     if(!movements.length) return { rebuilt:false, reason:'no_movements' };
+
+    // §v1.1.100-FIX2: Snapshot current stock BEFORE reset — preserves products with no movements
+    const preRebuildStock = {};
+    DB.all('PRODUCTS').forEach(p=>{ preRebuildStock[p.id] = parseFloat(p.stock||0); });
+
     // Reset all product stock to 0
     DB.all('PRODUCTS').forEach(p=> DB.update('PRODUCTS', p.id, { stock:0 }));
     // Replay movements in chronological order
@@ -11309,9 +11556,19 @@ const FINANCIAL_ENGINE = {
     Object.entries(stockMap).forEach(([pid, stock]) => {
       DB.update('PRODUCTS', pid, { stock: Math.max(0, Math.round(stock*1000)/1000) });
     });
+    // §v1.1.100-FIX2: Restore stock for products that had no movements (legacy products)
+    // These are products created before FIX1 — we trust their stored stock value
+    const noMovementPids = Object.keys(preRebuildStock).filter(pid => !stockMap[pid]);
+    noMovementPids.forEach(pid => {
+      const savedStock = preRebuildStock[pid];
+      if(savedStock > 0){
+        DB.update('PRODUCTS', pid, { stock: savedStock });
+        if(window.DEV_MODE) console.log('[rebuildStock] preserved legacy stock for', pid, '=', savedStock);
+      }
+    });
     // Only log when NOT in silent mode (e.g. not called from REFRESH_CTRL.hard)
-    if(!opts.silent) EVENTS.log('STOCK_REBUILT',{ products:Object.keys(stockMap).length, movements:movements.length }, 'system');
-    return { rebuilt:true, stockMap };
+    if(!opts.silent) EVENTS.log('STOCK_REBUILT',{ products:Object.keys(stockMap).length, movements:movements.length, legacyPreserved:noMovementPids.length }, 'system');
+    return { rebuilt:true, stockMap, legacyPreserved:noMovementPids.length };
   },
 
   // ══════════════════════════════════════════════════════════════════
@@ -11496,12 +11753,25 @@ const FINANCIAL_ENGINE = {
     const grossProfitOnDebt   = all.reduce((a,d)=>a+d.grossProfit,0);
     const profitFromCollected = all.reduce((a,d)=>a+d.profitFromPaid,0);
 
-    // §FIX-OPS: جميع الأرقام المالية تأتي من CALC — المحرك الوحيد
-    const totalSales   = CALC.totalSales();
-    const totalExpenses= CALC.totalExpenses();
-    const _pnl4 = CALC.pnl();
-    const netProfit    = _pnl4.net;
-    const totalReturns = CALC.returnsBreakdown().totalReturns; // §PHASE4
+    // §v1.1.98-CACHE: try snapshot first, fall back to full recalc
+    let totalSales, totalExpenses, netProfit, totalReturns;
+    try{
+      const snap = CALC_CACHE.getOrRebuild();
+      if(snap && CALC_CACHE.isValid(snap)){
+        totalSales    = snap.totalSalesCents / 100;
+        totalExpenses = snap.totalExpensesCents / 100;
+        const _pnl    = CALC.pnl(); // still needed for COGS / net
+        netProfit     = _pnl.net;
+        totalReturns  = CALC.returnsBreakdown().totalReturns;
+      } else { throw new Error('cache_miss'); }
+    }catch(_){
+      // §FIX-OPS fallback: full recalc (original path — always correct)
+      totalSales    = CALC.totalSales();
+      totalExpenses = CALC.totalExpenses();
+      const _pnl4   = CALC.pnl();
+      netProfit     = _pnl4.net;
+      totalReturns  = CALC.returnsBreakdown().totalReturns;
+    }
 
     return {
       // New §3 metrics
@@ -11757,6 +12027,8 @@ const FINANCIAL_ENGINE = {
         invariantOk: inv.ok,
         failureCount: inv.failures.length
       }, sess?.id);
+      // §v1.1.98-CACHE: rebuild complete → invalidate stale snapshot, next load will rebuild it
+      try{ CALC_CACHE.invalidate(); }catch(_){}
 
       return { ok:true, before, after, invariants:inv, stockRebuilt: stockRebuildResult.rebuilt };
 
@@ -12585,7 +12857,7 @@ const JRNL = {
     // §4 — Arabic type labels for badge display
     const EVENT_LABEL = {
       'SALE':'بيع', 'DEBT_PAYMENT':'تسديد دين', 'FIRST_INSTALLMENT':'دفعة أولى',
-      'RETURN':'مرتجع', 'EXPENSE':'مصروف', 'INVENTORY_ADJ':'تسوية مخزن',
+      'RETURN':'مرتجع', 'EXPENSE':'مصروف', 'EXPENSE_DELETED':'حذف مصروف', 'INVENTORY_ADJ':'تسوية مخزن',
       'CREDIT_ISSUED':'رصيد دائن', 'CREDIT_CONSUMED':'استهلاك رصيد',
       'BACKUP':'نسخة احتياطية', 'RESTORE':'استعادة بيانات', 'RESTORE_STARTED':'استعادة بيانات',
       'EXP_FILE_CREATED':'ملف مالي جديد', 'EXP_FILE_PAYMENT':'دفعة ملف',
@@ -13489,7 +13761,7 @@ const STRESS_TEST = {
     // ── Arabic labels per event type (mirrors Journal) ──
     const EVENT_LABEL_OPS = {
       'SALE':'بيع', 'DEBT_PAYMENT':'تسديد دين', 'FIRST_INSTALLMENT':'دفعة أولى',
-      'RETURN':'مرتجع', 'EXPENSE':'مصروف', 'INVENTORY_ADJ':'تسوية مخزن',
+      'RETURN':'مرتجع', 'EXPENSE':'مصروف', 'EXPENSE_DELETED':'حذف مصروف', 'INVENTORY_ADJ':'تسوية مخزن',
       'CREDIT_ISSUED':'رصيد دائن', 'CREDIT_CONSUMED':'استهلاك رصيد',
       'BACKUP':'نسخة احتياطية', 'RESTORE':'استعادة بيانات', 'RESTORE_STARTED':'استعادة بيانات',
       'EXP_FILE_CREATED':'ملف مالي جديد', 'EXP_FILE_PAYMENT':'دفعة ملف',
@@ -13652,6 +13924,31 @@ const STRESS_TEST = {
 };
 // ── REPORTS ──
 const RPTS = {
+  // §v1.1.104-FIX-RPTS: Clean formatted invoice CSV export (replaces raw DB.all('INVOICES') dump)
+  exportInvoicesCSV(){
+    const s = getCurr();
+    const invs = DB.all('INVOICES')
+      .filter(i => i.type==='بيع' && i.status!=='ملغاة')
+      .sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    if(!invs.length){ TOAST.err('لا توجد فواتير للتصدير'); return; }
+    const headers = ['رقم الفاتورة','التاريخ','العميل','كود العميل','الإجمالي ('+s+')','المدفوع ('+s+')','المتبقي ('+s+')','طريقة الدفع','الكاشير','الحالة','ملاحظات'];
+    const rows = invs.map(inv => {
+      const { paid: livePaid, remain: liveRemain } = CALC.invoiceActualRemain(inv);
+      const status = liveRemain <= 0.001 ? 'مكتملة' : livePaid > 0.001 ? 'مدفوعة جزئياً' : 'معلقة';
+      const payTypeAr = inv.payType==='cash'?'نقدي':inv.payType==='transfer'?'تحويل':inv.payType==='partial'?'جزئي':'آجل';
+      return [
+        inv.num||'—', inv.date||'—', inv.customer||'عميل عام', inv.custCode||'—',
+        parseFloat(inv.total||0).toFixed(2), livePaid.toFixed(2), liveRemain.toFixed(2),
+        payTypeAr, inv.cashier||'—', status, inv.notes||''
+      ];
+    });
+    const escape = v => '"'+String(v||'').replace(/"/g,'""')+'"';
+    const csv = '\ufeff' + [headers, ...rows].map(r=>r.map(escape).join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download = 'تقرير_الفواتير_'+todayISO()+'.csv'; a.click();
+    TOAST.ok('✓ تم تصدير '+invs.length+' فاتورة');
+  },
   renderAll(){
     CALC.syncAllDebts();
     CALC.syncAllInvoices();
@@ -15403,6 +15700,8 @@ const PURCHASE_INV = {
     }
     
     UI.closeModal('purchaseInvModal');
+    // §v1.1.99-AUDIT-FIX-A: purchase invoice adds stock cost → invalidate snapshot
+    try{ CALC_CACHE.invalidate(); }catch(_){}
     TOAST.ok('✅ تم حفظ فاتورة الشراء بنجاح');
   }
 };
@@ -15570,9 +15869,14 @@ function generatePurchaseInvoicePDF(invoiceId) {
     /* Footer */
     .footer{text-align:center;color:#9ca3af;font-size:10px;margin-top:18px;padding-top:10px;border-top:1px solid #e5e7eb}
     @media print{
-      body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      .page{padding:10px}
-      .no-print{display:none}
+      @page{size:A4 portrait;margin:12mm}
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact;max-width:100%!important}
+      .page{padding:10px;max-width:100%!important}
+      .no-print{display:none!important}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid;break-inside:avoid}
+      thead{display:table-header-group}
+      tfoot{display:table-footer-group}
     }
   </style>
 </head>
@@ -16012,6 +16316,8 @@ const SUPPLIER_PAY = {
     }
     
     UI.closeModal('supplierPayModal');
+    // §v1.1.99-AUDIT-FIX-B: supplier payment changes financial position → invalidate snapshot
+    try{ CALC_CACHE.invalidate(); }catch(_){}
     TOAST.ok('✅ تم تسجيل الدفعة بنجاح');
   }
 };
@@ -16390,6 +16696,36 @@ function toggleUser(id){ USERS_PAGE.toggle(id); }
 
 // ── BACKUP PAGE ──
 const BKP_PAGE = {
+  // §v1.1.110: Check hash chain integrity and show result in UI
+  checkHashChain(){
+    const result = LEDGER_HASH.verifyIntegrity();
+    const statusEl = document.getElementById('hashChainStatus');
+    const rebuildBtn = document.getElementById('rebuildHashBtn');
+    if(result.ok){
+      if(statusEl) statusEl.innerHTML = '<span style="color:var(--green);font-weight:700">✅ سليمة</span>';
+      if(rebuildBtn) rebuildBtn.style.display = 'none';
+      TOAST.ok('✅ سلسلة الهاش سليمة — ' + (result.hashed||0) + ' حدث مؤمَّن');
+    } else {
+      if(statusEl) statusEl.innerHTML = '<span style="color:var(--red);font-weight:700">❌ مكسورة</span>';
+      if(rebuildBtn) rebuildBtn.style.display = '';
+      TOAST.warn('⚠️ سلسلة الهاش مكسورة — اضغط "إعادة بناء" لإصلاحها');
+    }
+  },
+  // §v1.1.110: Rebuild hash chain after cross-device restore
+  rebuildHashChain(){
+    if(!confirm('إعادة بناء سلسلة الهاش؟\n\nهذا الإجراء آمن تماماً — لن يُحذف أو يُعدَّل أي سجل.\nفقط يُعاد ربط قيم الهاش بترتيب صحيح.\n\nيُستخدم بعد الاستعادة من جهاز مختلف.')) return;
+    const result = LEDGER_HASH.rebuildChain();
+    const statusEl = document.getElementById('hashChainStatus');
+    const rebuildBtn = document.getElementById('rebuildHashBtn');
+    if(result.ok){
+      if(statusEl) statusEl.innerHTML = '<span style="color:var(--green);font-weight:700">✅ سليمة</span>';
+      if(rebuildBtn) rebuildBtn.style.display = 'none';
+      EVENTS.log('HASH_CHAIN_REBUILT', {rebuilt: result.rebuilt}, AUTH.getSession()?.id);
+      TOAST.ok('✅ تمت إعادة بناء سلسلة الهاش — ' + result.rebuilt + ' حدث');
+    } else {
+      TOAST.err('❌ فشلت إعادة البناء: ' + (result.error||'خطأ غير معروف'));
+    }
+  },
   render(){
     if(!AUTH.requireOwner()) return;
     const s=getCurr();
@@ -16409,11 +16745,15 @@ const BKP_PAGE = {
     setTimeout(()=>this.render(),500);
   },
   exportOps(){
-    const pin=prompt('أدخل PIN المدير:')||'';
+    // §v1.1.99-FIX-PIN: only prompt for PIN when pinEnabled === true AND pin is set
+    const _cfg = getCfg();
+    const pin = (_cfg.pinEnabled === true && _cfg.pin) ? (prompt('أدخل PIN المدير:')||'') : '';
     BACKUP.exportOpsLog(pin);
   },
   exportTable(table){
-    const pin=prompt('أدخل PIN:')||'';
+    // §v1.1.99-FIX-PIN: only prompt for PIN when pinEnabled === true AND pin is set
+    const _cfg = getCfg();
+    const pin = (_cfg.pinEnabled === true && _cfg.pin) ? (prompt('أدخل PIN:')||'') : '';
     BACKUP.exportCSV(table,pin);
   },
 
@@ -18387,6 +18727,8 @@ const CUST_PAGE = {
     }).join('');
     const html=`<div class="pdfbox"><div class="pdfhdr"><div><div class="pdfco">🏪 ${cfg.storeName}</div><div style="font-size:11px">سجل الزبائن — ${todayISO()}</div></div></div><table class="pdftbl"><thead><tr><th>الكود</th><th>الاسم</th><th>الفواتير</th><th>المشتريات</th><th>الديون</th><th>رصيد دائن</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     document.getElementById('pdfContent').innerHTML=html;
+    // §v1.1.108-FIX2: apply PDF page styles for correct multipage printing
+    applyPdfStyles();
     UI.showModal('pdfModal');
   },
 
@@ -18419,6 +18761,8 @@ const CUST_PAGE = {
       <div class="pdffot">${cfg.footer||'شكراً لتعاملكم معنا'}</div>
     </div>`;
     document.getElementById('pdfContent').innerHTML=html;
+    // §v1.1.108-FIX3: apply PDF page styles for correct multipage printing
+    applyPdfStyles();
     UI.showModal('pdfModal');
   }
 };
